@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// **Tipos de Usuário**
+enum UserType {
+  GUARDIAN
+  DEPENDENT
+  DOCTOR
+  ADMIN
+}
+
+/// **Gênero**
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+/// **Status Genérico**
+enum StatusType {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+/// **Tipos de Comorbidades**
+enum ComorbidityType {
+  DIABETES
+  HYPERTENSION
+  ASTHMA
+  CARDIAC_DISEASE
+  RESPIRATORY_DISEASE
+  OTHER
+}
+
+/// **Tipos de Medicações**
+enum MedicationType {
+  ANALGESIC
+  ANTIBIOTIC
+  ANTIHISTAMINE
+  ANTIHYPERTENSIVE
+  INSULIN
+  OTHER
+}
+
+/// **Tipos de Alergias**
+enum AllergyType {
+  FOOD
+  MEDICATION
+  ENVIRONMENTAL
+  INSECT
+  OTHER
+}
+
+/// **Status de Chat**
+enum ChatStatus {
+  OPEN
+  CLOSED
+  PENDING
+}
+
+model Country {
+  id       String   @id @default(uuid())
+  name     String   @unique
+  states   State[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model State {
+  id          String   @id @default(uuid())
+  name        String
+  abbreviation String @unique
+  countryId   String
+  country     Country @relation(fields: [countryId], references: [id])
+  cities      City[]
+  guardian     Guardian[]
+  doctors     Doctor[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, countryId])
+}
+
+model City {
+  id        String   @id @default(uuid())
+  name      String
+  stateId   String
+  state     State @relation(fields: [stateId], references: [id])
+  guardians Guardian[]
+  doctors   Doctor[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, stateId])
+}
+
+model Guardian {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  whatsapp        String   @unique
+  cpf             String   @unique
+  passwordHash    String
+  cityId          String?
+  stateId         String?
+  status          StatusType @default(ACTIVE)
+  userType        UserType @default(GUARDIAN)
+  roles           Json     @default("[\"ROLE_USER\"]")
+  getStreamRef    String
+  getStreamToken  String?
+  firebaseToken   String?
+  termsAccepted   Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  city            City? @relation(fields: [cityId], references: [id])
+  state           State? @relation(fields: [stateId], references: [id])
+
+  dependents      Dependent[]
+  tokens          Token[]
+  passwordRecovery PasswordRecovery?
+}
+
+model Dependent {
+  id              String   @id @default(uuid())
+  name            String
+  photo           String?  // URL of the photo
+  birthDate       DateTime
+  comorbidity     ComorbidityType?
+  medication      MedicationType?
+  allergy         AllergyType?
+  otherInfo       String?
+  status          StatusType @default(ACTIVE)
+  guardianId      String
+  doctorId        String?
+
+  guardian        Guardian @relation(fields: [guardianId], references: [id])
+  doctor          Doctor?  @relation(fields: [doctorId], references: [id])
+  chats           Chat[]
+}
+
+model Doctor {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  cpf             String   @unique
+  whatsapp        String   @unique
+  passwordHash    String
+  cityId          String?
+  stateId         String?
+  photo           String
+  crm             String   @unique
+  rqe             String?  // Registro de Especialidade
+  status          StatusType @default(ACTIVE)
+  userType        UserType @default(DOCTOR)
+  roles           Json     @default("[\"ROLE_DOCTOR\"]")
+  getStreamRef    String
+  getStreamToken  String
+  firebaseToken   String?
+  termsAccepted   Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  city            City? @relation(fields: [cityId], references: [id])
+  state           State? @relation(fields: [stateId], references: [id])
+
+  dependents      Dependent[]
+  chats           Chat[]
+  tokens          Token[]
+  passwordRecovery PasswordRecovery?
+}
+
+model Chat {
+  id            String   @id @default(uuid())
+  dependentId   String
+  doctorId      String
+  getStreamChatId String
+  status        ChatStatus @default(OPEN)
+
+  dependent     Dependent @relation(fields: [dependentId], references: [id])
+  doctor        Doctor    @relation(fields: [doctorId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Admin {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  phone           String
+  cpf             String   @unique
+  passwordHash    String
+  roles           Json     @default("[\"ROLE_ADMIN\"]")
+  status          StatusType @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tokens          Token[]
+  passwordRecovery PasswordRecovery?
+}
+
+model Token {
+  id          String   @id @default(uuid())
+  authToken   String   @unique @db.VarChar(512)
+  resetToken  String   @unique @db.VarChar(512)
+  authExpiry  DateTime
+  resetExpiry DateTime
+  guardianId  String?
+  doctorId    String?
+  adminId     String?
+  userType    UserType
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  guardian Guardian? @relation(fields: [guardianId], references: [id])
+  doctor   Doctor?   @relation(fields: [doctorId], references: [id])
+  admin    Admin?    @relation(fields: [adminId], references: [id])
+}
+
+model PasswordRecovery {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  status     Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  guardianId String?  @unique
+  doctorId   String?  @unique
+  adminId    String?  @unique
+  userType   UserType
+
+  guardian   Guardian? @relation(fields: [guardianId], references: [id])
+  doctor     Doctor?   @relation(fields: [doctorId], references: [id])
+  admin      Admin?    @relation(fields: [adminId], references: [id])
+}
+
+model Logs {
+  id        String   @id @default(uuid())
+  level     String   @db.VarChar(50)
+  message   String
+  context   String?  @db.VarChar(250)
+  stack     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

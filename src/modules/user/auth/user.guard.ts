@@ -82,11 +82,11 @@ export class TokenUserService {
   }
 
   private createTokens(userId: string, userType: string) {
-    const authToken = this.jwtService.sign({ userId, userType }, { expiresIn: '24h' });
-    const resetToken = this.jwtService.sign({ userId, userType }, { expiresIn: '7d' });
+    const authToken = this.jwtService.sign({ userId, userType }, { expiresIn: '30d' });
+    const resetToken = this.jwtService.sign({ userId, userType }, { expiresIn: '60d' });
 
-    const authExpiry = new Date(Date.now() + 24 * 3600000); // 24 hours
-    const resetExpiry = new Date(Date.now() + 7 * 86400000); // 7 days
+    const authExpiry = new Date(Date.now() + 30 * 86400000); // 30 days
+    const resetExpiry = new Date(Date.now() + 60 * 86400000); // 60 days
 
     return { authToken, resetToken, authExpiry, resetExpiry };
   }

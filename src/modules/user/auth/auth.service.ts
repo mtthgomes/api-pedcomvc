@@ -64,6 +64,10 @@ export class AuthService {
   }  
 
   private async deleteUser(email: string){
+    const user = await this.prisma.guardian.findUnique({ where: { email } });
+    if(!user){
+      return;
+    }
     await this.prisma.guardian.delete({ where: { email } });
     return;
   }

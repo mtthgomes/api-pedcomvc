@@ -33,7 +33,7 @@ export class GetStreamService {
 
   /// **📌 Criar Chat**
   async createChat(payload: { channelId: string; userId: string; members: string[] }) {
-    const url = `${this.apiUrl}/createChat`;
+    const url = `${this.apiUrl}/api/chat/createChat`;
     const headers = { Authorization: `Bearer ${this.authToken}` };
     const { data } = await this.httpService.post(url, payload, { headers }).toPromise();
     return data;

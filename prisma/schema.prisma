@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -27,35 +27,6 @@ enum StatusType {
   ACTIVE
   INACTIVE
   PENDING
-}
-
-/// **Tipos de Comorbidades**
-enum ComorbidityType {
-  DIABETES
-  HYPERTENSION
-  ASTHMA
-  CARDIAC_DISEASE
-  RESPIRATORY_DISEASE
-  OTHER
-}
-
-/// **Tipos de Medicações**
-enum MedicationType {
-  ANALGESIC
-  ANTIBIOTIC
-  ANTIHISTAMINE
-  ANTIHYPERTENSIVE
-  INSULIN
-  OTHER
-}
-
-/// **Tipos de Alergias**
-enum AllergyType {
-  FOOD
-  MEDICATION
-  ENVIRONMENTAL
-  INSECT
-  OTHER
 }
 
 /// **Status de Chat**
@@ -133,9 +104,9 @@ model Dependent {
   name            String
   photo           String?  // URL of the photo
   birthDate       DateTime
-  comorbidity     ComorbidityType?
-  medication      MedicationType?
-  allergy         AllergyType?
+  comorbidity     String?
+  medication      String?
+  allergy         String?
   otherInfo       String?
   status          StatusType @default(ACTIVE)
   guardianId      String

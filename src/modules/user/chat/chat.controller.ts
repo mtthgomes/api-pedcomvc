@@ -19,4 +19,13 @@ export class UserDependentController {
     }
     return create;
   }
+
+  @Get('/id/:id')
+  async validate(@Param('id') id: string): Promise<any> {
+    const validate = await this.chatService.findById(id);
+    if(validate.error) {
+      throw new HttpException(validate.data, HttpStatus.BAD_REQUEST);
+    }
+    return validate;
+  }
 }

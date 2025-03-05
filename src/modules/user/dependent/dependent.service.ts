@@ -82,7 +82,7 @@ export class UserDependentService {
 
       return { error: false, data: dependent };
     } catch (error) {
-      console.error('FIND_DEPENDENT_BY_ID_ERROR:', error);
+      console.error('FIND_CHAT_BY_ID_ERROR:', error);
       return { error: true, data: `Erro ao buscar dependente: ${error.message}` };
     }
   }

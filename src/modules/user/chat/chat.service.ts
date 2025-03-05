@@ -60,4 +60,21 @@ export class UserChatService {
       return { error: true, data: `Erro ao criar dependente: ${error.message}` };
     }
   }
+
+  async findById(id: string): Promise<{ error: boolean; data: any }> {
+    try {
+      const dependent = await this.prisma.chat.findUnique({
+        where: { id },
+      });
+
+      if (!dependent) {
+        return { error: true, data: 'Chat não encontrado' };
+      }
+
+      return { error: false, data: dependent };
+    } catch (error) {
+      console.error('FIND_CHAT_BY_ID_ERROR:', error);
+      return { error: true, data: `Erro ao buscar dependente: ${error.message}` };
+    }
+  }
 }

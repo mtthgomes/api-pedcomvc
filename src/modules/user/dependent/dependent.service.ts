@@ -58,8 +58,7 @@ export class UserDependentService {
   async list(guardianId: string): Promise<{ error: boolean; data: string|object }> {
     try {
       const dependents = await this.prisma.dependent.findMany({
-        where: { guardianId },
-        orderBy: {updatedAt: 'desc'}
+        where: { guardianId }
       });
 
       return { error: false, data: dependents };

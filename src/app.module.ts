@@ -6,7 +6,6 @@ import { MyLogger } from 'src/shared/services/logger.service';
 import { PrismaService } from './shared/database/prisma.service';
 import { UserGlobalModule } from './modules/user/user.module';
 import { DoctorGlobalModule } from './modules/doctor/doctor.module';
-import { LOGSModule } from './modules/logs/logs.module';
 
 @Global()
 @Module({
@@ -14,7 +13,6 @@ import { LOGSModule } from './modules/logs/logs.module';
     UserGlobalModule,
     DoctorGlobalModule,
     DatabaseModule,
-    LOGSModule,
   ],
   controllers: [AppController],
   providers: [

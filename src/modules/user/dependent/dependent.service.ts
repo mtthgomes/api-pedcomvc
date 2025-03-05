@@ -34,7 +34,7 @@ export class UserDependentService {
         return { error: true, data: imageUrl.data };
       }
 
-      await this.prisma.dependent.create({
+      const dependent = await this.prisma.dependent.create({
         data: {
           name: dependentDto.name,
           photo: imageUrl.data,
@@ -47,7 +47,7 @@ export class UserDependentService {
         },
       });
 
-      return { error: false, data: 'Dependente cadastrado com sucesso!' };
+      return { error: false, data: dependent.id };
     } catch (error) {
       console.error('CREATE_DEPENDENT_ERROR:', error);
       return { error: true, data: `Erro ao criar dependente: ${error.message}` };
@@ -59,6 +59,7 @@ export class UserDependentService {
     try {
       const dependents = await this.prisma.dependent.findMany({
         where: { guardianId },
+        orderBy: {updatedAt: 'desc'}
       });
 
       return { error: false, data: dependents };

@@ -28,4 +28,13 @@ export class UserDependentController {
     }
     return validate;
   }
+
+  @Get('/slug/:slug')
+  async bySlug(@Param('slug') slug: string): Promise<any> {
+    const validate = await this.chatService.findBySlug(slug);
+    if(validate.error) {
+      throw new HttpException(validate.data, HttpStatus.BAD_REQUEST);
+    }
+    return validate;
+  }
 }

@@ -49,15 +49,27 @@ export class TokenUserService {
 
   async findByToken(authToken: string) {
     const tokenRecord = await this.prisma.token.findFirst({ where: { authToken } });
-
+  
     if (!tokenRecord || tokenRecord.authExpiry < new Date()) {
       return { error: true, data: "logout" };
     }
-
-    const user = await this.prisma.guardian.findUnique({ where: { id: tokenRecord.guardianId } });
-
+  
+    // 🔹 Verifica se o guardianId está presente antes de buscar o usuário
+    if (!tokenRecord.guardianId) {
+      return { error: true, data: "logout" };
+    }
+  
+    const user = await this.prisma.guardian.findUnique({
+      where: { id: tokenRecord.guardianId },
+    });
+  
+    // 🔹 Caso o usuário não seja encontrado, retorna erro
+    if (!user) {
+      return { error: true, data: "logout" };
+    }
+  
     return { error: false, data: user.id };
-  }
+  }  
 
   async validateToken(authToken: string) {
     const decryptionResult = await this.decryptToken(authToken);

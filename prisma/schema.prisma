@@ -154,7 +154,7 @@ model Chat {
   id            String   @id @default(uuid())
   dependentId   String
   doctorId      String
-  getStreamChatId String
+  getStreamChatId String   @unique
   status        ChatStatus @default(OPEN)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

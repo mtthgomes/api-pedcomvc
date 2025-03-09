@@ -1,4 +1,5 @@
-import { IsString, IsEmail, IsDate, IsBoolean } from 'class-validator';
+import { Gender } from '@prisma/client';
+import { IsString, IsEmail, IsDate, IsBoolean, IsEnum } from 'class-validator';
 
 export class CreateDoctorDto {
   @IsString()
@@ -24,4 +25,7 @@ export class CreateDoctorDto {
 
   @IsString()
   crm: string;
+
+  @IsEnum(Gender)
+  gender: Gender;
 }

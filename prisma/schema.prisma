@@ -90,7 +90,7 @@ model Guardian {
   termsAccepted   Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-
+  gender          Gender
   city            City? @relation(fields: [cityId], references: [id])
   state           State? @relation(fields: [stateId], references: [id])
 
@@ -111,6 +111,7 @@ model Dependent {
   status          StatusType @default(ACTIVE)
   guardianId      String
   doctorId        String?
+  gender          Gender
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -128,10 +129,13 @@ model Doctor {
   passwordHash    String
   cityId          String?
   stateId         String?
-  photo           String
+  photo           String?
+  description     String?
+  gender          Gender
+  prefix          String
   crm             String   @unique
   rqe             String?  // Registro de Especialidade
-  status          StatusType @default(ACTIVE)
+  status          StatusType @default(PENDING)
   userType        UserType @default(DOCTOR)
   roles           Json     @default("[\"ROLE_DOCTOR\"]")
   getStreamRef    String

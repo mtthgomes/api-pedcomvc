@@ -1,7 +1,5 @@
 import { PrismaService } from '@app/shared/database/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { MulterFile } from '@app/shared/interfaces/multer';
-import { ImageUploadService } from '@app/shared/services/image-upload.service';
 
 @Injectable()
 export class UserDoctorService {
@@ -18,6 +16,7 @@ export class UserDoctorService {
           photo: true,
           getStreamRef: true
         },
+        where: {status: 'ACTIVE'}
       });
       
 

@@ -44,6 +44,7 @@ export class UserDependentService {
           allergy: dependentDto.allergy,
           otherInfo: dependentDto.otherInfo,
           guardianId: userId,
+          gender: dependentDto.gender
         },
       });
 
@@ -74,6 +75,7 @@ export class UserDependentService {
     try {
       const dependent = await this.prisma.dependent.findUnique({
         where: { id },
+        include: { doctor: true }
       });
 
       if (!dependent) {

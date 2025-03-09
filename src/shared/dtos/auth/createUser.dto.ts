@@ -22,4 +22,7 @@ export class CreateUserDto {
 
   @IsBoolean()
   termsAccepted: boolean;
+
+  @IsEnum(Gender)
+  gender: Gender;
 }

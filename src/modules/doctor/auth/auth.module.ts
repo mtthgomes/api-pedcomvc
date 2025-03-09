@@ -10,6 +10,7 @@ import { ValidatorDoctorUseCase } from './use-case/validator-use-case';
 import { HttpModule } from '@nestjs/axios';
 import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 import { DigitCodeService } from '@app/shared/services/digit-code.service';
+import { ImageUploadService } from '@app/shared/services/image-upload.service';
 
 @Module({
   imports: [
@@ -25,7 +26,6 @@ import { DigitCodeService } from '@app/shared/services/digit-code.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [tokenDoctorService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorDoctorUseCase, GetStreamService, DigitCodeService],
-  exports: [tokenDoctorService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorDoctorUseCase, GetStreamService, DigitCodeService],
+  providers: [tokenDoctorService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorDoctorUseCase, GetStreamService, DigitCodeService, ImageUploadService],
 })
 export class DoctorAuthModule {}

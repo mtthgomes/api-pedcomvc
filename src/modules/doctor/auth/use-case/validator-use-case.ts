@@ -20,6 +20,10 @@ export class ValidatorDoctorUseCase {
       return{  "error": true, "data": "O campo Nome, Email, CPF, Telefone e Senha não podem ser vazios" }
     }
 
+    if(userDto.gender != 'MALE' && userDto.gender != 'FEMALE' && userDto.gender != 'OTHER'){
+      return { error: true, data: 'Gênero não existe' };
+    }
+
     return{  "error": false, "data": "Todos os campos estão preenchidos" }
   }
 

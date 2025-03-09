@@ -10,6 +10,10 @@ export class DependentValidator {
       return { error: true, data: 'A data de nascimento é obrigatória.' };
     }
 
+    if(dependentDto.gender != 'MALE' && dependentDto.gender != 'FEMALE' && dependentDto.gender != 'OTHER'){
+      return { error: true, data: 'Gênero não existe' };
+    }
+
     return { error: false, data: 'Validação bem-sucedida.' };
   }
 }

@@ -77,8 +77,14 @@ export class TokenUserService {
 
     const tokenRecord = await this.prisma.token.findFirst({ where: { authToken } });
 
+    if(tokenRecord.guardianId === null){
+      return { error: true, data: "logout" };
+    }
+
     if (!tokenRecord) return { error: true, data: "logout" };
     if (!decryptionResult.data.userId) return { error: true, data: "logout" };
+
+    console.log(decryptionResult.data.userId)
 
     const user = await this.prisma.guardian.findUnique({ where: { id: decryptionResult.data.userId } });
 

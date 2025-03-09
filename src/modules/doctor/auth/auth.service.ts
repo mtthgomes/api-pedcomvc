@@ -10,6 +10,9 @@ import { GetStreamService } from '@app/shared/services/microservice/getstream.se
 import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { CreateDoctorDto } from '@app/shared/dtos/auth/createDoctor.dto';
 import { firebaseTokenDto } from './dto/firebase.dto';
+import { descriptionDto } from './dto/profile';
+import { MulterFile } from '@app/shared/interfaces/multer';
+import { ImageUploadService } from '@app/shared/services/image-upload.service';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +23,8 @@ export class AuthService {
     private readonly ValidatorUser: ValidatorDoctorUseCase,
     private readonly tokenService: tokenDoctorService,
     private readonly getStreamService: GetStreamService,
-    private readonly digitCodeService: DigitCodeService
+    private readonly digitCodeService: DigitCodeService,
+    private readonly imageUploadService: ImageUploadService,
   ) {}
 
   async createDoctor(doctorDTO: CreateDoctorDto): Promise<{ error: boolean; data: string }> {
@@ -45,6 +49,13 @@ export class AuthService {
       });
   
       const getStreamTokenResponse = await this.getStreamService.getUserToken(userRef);
+
+      let prefix = ''
+      if(doctorDTO.gender == 'MALE'){
+        prefix="Dr"
+      } else {
+        prefix="Dra"
+      }
   
       await this.prisma.doctor.create({
         data: {
@@ -52,7 +63,7 @@ export class AuthService {
           passwordHash: hashedPassword, 
           getStreamRef: userRef, 
           getStreamToken: getStreamTokenResponse.token,
-          photo: "https://medicinasa.com.br/wp-content/uploads/2023/03/medico-hospital-esteto.jpg"
+          prefix
         }
       });
   
@@ -83,7 +94,7 @@ export class AuthService {
   
     const tokens = await this.prisma.token.findMany({ where: { doctorId: user.id } });
   
-    if (user.status !== StatusType.ACTIVE) {
+    if (user.status === StatusType.INACTIVE) {
       if (tokens.length > 0) {
         await this.prisma.token.deleteMany({ where: { doctorId: user.id } });
       }
@@ -109,11 +120,47 @@ export class AuthService {
           return { error: false, data: "Notification Token já está atualizado!" };
         }
         await this.getStreamService.updateFirebaseToken({userId: doctor.getStreamRef, firebaseToken: notificationToken.firebaseToken});
-        await this.prisma.guardian.update({where: {id}, data: {firebaseToken: notificationToken.firebaseToken}})
+        await this.prisma.doctor.update({where: {id}, data: {firebaseToken: notificationToken.firebaseToken}})
         return { error: false, data: "Notification Token atualizado com sucesso!" };
       } catch (error) {
         this.logger.error('UPDATE_NOTIFICATION_DOCTOR_ERROR', error);
         return { error: true, data: `Erro updating FirebaseToken` };
       }
     }
+
+    async updateProfile(dependentDto: descriptionDto, doctorId: string, image_user: MulterFile): Promise<{ error: boolean; data: string }> {
+        try {
+          // Verifica se o guardião existe
+          const guardian = await this.prisma.doctor.findUnique({
+            where: { id: doctorId },
+          });
+    
+          if (!guardian) {
+            return { error: true, data: 'Médico não encontrado no sistema' };
+          }
+    
+          if(!dependentDto.description){
+            return { error: true, data: 'Descrição não enviada' };
+          }
+    
+          const imageUrl = await this.imageUploadService.uploadImage(image_user);
+          if (imageUrl.error) {
+            return { error: true, data: imageUrl.data };
+          }
+    
+          const dependent = await this.prisma.doctor.update({
+            where: {id: doctorId},
+            data: {
+              description: dependentDto.description,
+              photo: imageUrl.data,
+              status: 'ACTIVE'
+            },
+          });
+    
+          return { error: false, data: dependent.id };
+        } catch (error) {
+          this.logger.error('UPDATE_PROFILE_DOCTOR_ERROR:', error);
+          return { error: true, data: `Erro ao atualizar perfil médico` };
+        }
+      }
 }

@@ -8,7 +8,7 @@ import { Injectable } from '@nestjs/common';
 import { UserType } from '@prisma/client';
 
 @Injectable()
-export class UserRecoveryService {
+export class GuardianRecoveryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: MyLogger,
@@ -18,11 +18,11 @@ export class UserRecoveryService {
   ) {}
 
   async startRecovery(emailDto: EmailRecoveryDto): Promise<{ error: boolean; data: string }> {
-    const user = await this.prisma.guardian.findUnique({
+    const guardian = await this.prisma.guardian.findUnique({
       where: { email: emailDto.email },
     });
 
-    if (!user) {
+    if (!guardian) {
       return { error: true, data: 'Usuario não encontrado no sistema' };
     }
 
@@ -35,36 +35,36 @@ export class UserRecoveryService {
       const tokenData = {
         token: code,
         expiresAt: recoveryExpiry,
-        userId: user.id,
+        guardianId: guardian.id,
         userType: UserType.GUARDIAN,
       };
 
       await this.prisma.passwordRecovery.upsert({
-        where: { guardianId: user.id },
+        where: { guardianId: guardian.id },
         update: {
           token: code,
           expiresAt: recoveryExpiry,
           userType: 'GUARDIAN',
-          guardianId: user.id,
+          guardianId: guardian.id,
         },
         create: tokenData,
       });
 
-      await this.emailService.sendMailRecoveryPassword(user.email, user.name, code);
+      await this.emailService.sendMailRecoveryPassword(guardian.email, guardian.name, code);
 
       return { error: false, data: 'O pedido de recuperação de senha foi criado com sucesso.' };
     } catch (error) {
-      this.logger.error('CREATE_RECOVERY_USER_ERROR', error);
-      return { error: true, data: `Failed to create recovery user: ${error.message}` };
+      this.logger.error('CREATE_RECOVERY_GUARDIAN_ERROR', error);
+      return { error: true, data: `Erro ao enviar pedido de recuperação de senha` };
     }
   }
 
   async sendAgain(emailDto: EmailRecoveryDto): Promise<{ error: boolean; data: string }> {
-    const user = await this.prisma.guardian.findUnique({
+    const guardian = await this.prisma.guardian.findUnique({
       where: { email: emailDto.email },
     });
 
-    if (!user) {
+    if (!guardian) {
       return { error: true, data: 'Usuario não encontrado no sistema' };
     }
 
@@ -76,30 +76,30 @@ export class UserRecoveryService {
 
     try {
       const recovery = await this.prisma.passwordRecovery.findUnique({
-        where: { guardianId: user.id },
+        where: { guardianId: guardian.id },
       });
 
-      await this.emailService.sendMailRecoveryPassword(user.email, user.name, recovery.token);
+      await this.emailService.sendMailRecoveryPassword(guardian.email, guardian.name, recovery.token);
 
       return { error: false, data: 'O email foi enviado novamente...' };
     } catch (error) {
-      this.logger.error('SEND_AGAIN_RECOVERY_USER_ERROR', error);
-      return { error: true, data: `Failed to resend recovery email: ${error.message}` };
+      this.logger.error('SEND_AGAIN_RECOVERY_GUARDIAN_ERROR', error);
+      return { error: true, data: `Erro ao enviar novamente o token de recuperação` };
     }
   }
 
   async validateToken(validateData: ValidateRecoveryDto): Promise<{ error: boolean; data: string }> {
-    const user = await this.prisma.guardian.findUnique({
+    const guardian = await this.prisma.guardian.findUnique({
       where: { email: validateData.email },
     });
 
-    if (!user) {
+    if (!guardian) {
       return { error: true, data: 'Usuario não encontrado no sistema.' };
     }
 
     try {
       const recovery = await this.prisma.passwordRecovery.findUnique({
-        where: { guardianId: user.id },
+        where: { guardianId: guardian.id },
         include: { guardian: true },
       });
 
@@ -115,18 +115,18 @@ export class UserRecoveryService {
 
       return { error: false, data: 'Token Valido' };
     } catch (error) {
-      this.logger.error('RECOVERY_USER_VALIDATE', error);
+      this.logger.error('RECOVERY_GUARDIAN_VALIDATE', error);
       return { error: true, data: error.message };
     }
   }
 
   async resetPassword(recoveryData: RecoveryDataDto): Promise<{ error: boolean; data: string }> {
-    const user = await this.prisma.guardian.findUnique({
+    const guardian = await this.prisma.guardian.findUnique({
       where: { email: recoveryData.email },
     });
 
-    if (!user) {
-      return { error: true, data: 'Usuario não encontrado no sistema.' };
+    if (!guardian) {
+      return { error: true, data: 'Usuário não encontrado no sistema.' };
     }
 
     try {
@@ -137,12 +137,12 @@ export class UserRecoveryService {
       }
 
       await this.prisma.passwordRecovery.update({
-        where: { guardianId: user.id },
+        where: { guardianId: guardian.id },
         data: { status: true },
       });
 
       await this.prisma.guardian.update({
-        where: { id: user.id },
+        where: { id: guardian.id },
         data: { passwordHash: await this.passwordService.hashPassword(recoveryData.password) },
       });
 
@@ -150,19 +150,19 @@ export class UserRecoveryService {
 
       return { error: false, data: 'Senha alterada com sucesso' };
     } catch (error) {
-      this.logger.error('RECOVERY_USER_PASSWORD', error);
+      this.logger.error('RECOVERY_GUARDIAN_PASSWORD', error);
       return { error: true, data: 'Erro ao alterar a senha do usuário. Tente novamente' };
     }
   }
 
   async isValid(emailDto: EmailRecoveryDto): Promise<{ error: boolean }> {
-    const user = await this.prisma.guardian.findUnique({
+    const guardian = await this.prisma.guardian.findUnique({
       where: { email: emailDto.email },
     });
 
     try {
       const recovery = await this.prisma.passwordRecovery.findUnique({
-        where: { guardianId: user.id },
+        where: { guardianId: guardian.id },
       });
 
       if (recovery.status !== false) {
@@ -176,13 +176,13 @@ export class UserRecoveryService {
 
       return { error: false };
     } catch (error) {
-      this.logger.error('RECOVERY_USER_ISVALID', error);
+      this.logger.error('RECOVERY_GUARDIAN_ISVALID', error);
       return { error: true };
     }
   }
 
   async removePreviousToken(emailDto: EmailRecoveryDto): Promise<{ error: boolean }> {
-    const user = await this.prisma.guardian.findUnique({
+    const guardian = await this.prisma.guardian.findUnique({
       where: {
         email: emailDto.email
       }
@@ -190,7 +190,7 @@ export class UserRecoveryService {
 
     try {
       const recovery = await this.prisma.passwordRecovery.findUnique({
-        where: { guardianId: user.id },
+        where: { guardianId: guardian.id },
       });
 
       if (!recovery) {
@@ -203,7 +203,7 @@ export class UserRecoveryService {
 
       return { error: false };
     } catch (error) {
-      this.logger.error('RECOVERY_USER_DELETE', error);
+      this.logger.error('RECOVERY_GUARDIAN_DELETE', error);
       return { error: true };
     }
   }

@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { MyLogger } from './logger.service';
 import { RecoveryPasswordTemplate } from '../assets/emails/recoveryPasswordTemplate';
+import { WelcomeTemplate } from '../assets/emails/WelcomeTemplate';
 
 @Injectable()
 export class EmailService {
@@ -26,13 +27,32 @@ export class EmailService {
     return template.replace(/{{(.*?)}}/g, (_, key) => variables[key.trim()] || '');
   }
 
+  async sendMailWelcome(to: string, name: string) {
+    let htmlContent = this.replacePlaceholders(WelcomeTemplate, { name });
+
+    const subject = 'Bem vindo ao PedComVc';
+
+    const mailOptions = {
+      from: `"PedComVc" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html: htmlContent,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      this.logger.error('SEND_EMAIL_ERROR', error);
+    }
+  }
+
   async sendMailRecoveryPassword(to: string, name: string, token: string) {
     let htmlContent = this.replacePlaceholders(RecoveryPasswordTemplate, { name, token });
 
-    const subject = 'Recuperação de Senha - Crx Signator';
+    const subject = 'Recuperação de Senha - PedComVc';
 
     const mailOptions = {
-      from: `"Crx Signator" <${process.env.SMTP_USER}>`,
+      from: `"PedComVc" <${process.env.SMTP_USER}>`,
       to,
       subject,
       html: htmlContent,

@@ -1,11 +1,11 @@
 import { Controller, Post, Body, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
-import { UserRecoveryService } from './recovery.service';
+import { GuardianRecoveryService } from './recovery.service';
 import { EmailRecoveryDto, RecoveryDataDto, ValidateRecoveryDto } from '@app/shared/dtos/recovery/Recovery.dto';
 
 @Controller('user/recovery')
 export class UserRecoveryController {
   constructor(
-    private readonly userService: UserRecoveryService,
+    private readonly userService: GuardianRecoveryService,
   ) {}
 
   @Post('/')

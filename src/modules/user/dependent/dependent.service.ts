@@ -4,12 +4,14 @@ import { DependentDto } from './dto/create.dto';
 import { MulterFile } from '@app/shared/interfaces/multer';
 import { ImageUploadService } from '@app/shared/services/image-upload.service';
 import { DependentValidator } from './validator/dependent.validator';
+import { MyLogger } from '@app/shared/services/logger.service';
 
 @Injectable()
 export class UserDependentService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly imageUploadService: ImageUploadService
+    private readonly imageUploadService: ImageUploadService,
+    private readonly logger: MyLogger
   ) {}
 
   /// **🔥 Cria um novo dependente**
@@ -50,7 +52,7 @@ export class UserDependentService {
 
       return { error: false, data: dependent.id };
     } catch (error) {
-      console.error('CREATE_DEPENDENT_ERROR:', error);
+      this.logger.error('CREATE_DEPENDENT_ERROR', error);
       return { error: true, data: `Erro ao criar dependente: ${error.message}` };
     }
   }
@@ -60,12 +62,13 @@ export class UserDependentService {
     try {
       const dependents = await this.prisma.dependent.findMany({
         where: { guardianId },
+        orderBy: {createdAt: "desc"},
         include: { doctor: true, chats: true }
       });
 
       return { error: false, data: dependents };
     } catch (error) {
-      console.error('LIST_DEPENDENTS_ERROR:', error);
+      this.logger.error('LIST_DEPENDENTS_ERROR', error);
       return { error: true, data: `Erro ao listar dependentes: ${error.message}` };
     }
   }
@@ -84,7 +87,7 @@ export class UserDependentService {
 
       return { error: false, data: dependent };
     } catch (error) {
-      console.error('FIND_CHAT_BY_ID_ERROR:', error);
+      this.logger.error('FIND_CHAT_BY_ID_ERROR', error);
       return { error: true, data: `Erro ao buscar dependente: ${error.message}` };
     }
   }

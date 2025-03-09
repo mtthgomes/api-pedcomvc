@@ -10,6 +10,7 @@ import { StatusType } from '@prisma/client';
 import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { firebaseTokenDto } from './dto/firebase.dto';
+import { EmailService } from '@app/shared/services/email.service';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +21,8 @@ export class AuthService {
     private readonly ValidatorUser: ValidatorUserUseCase,
     private readonly tokenService: TokenUserService,
     private readonly getStreamService: GetStreamService,
-    private readonly digitCodeService: DigitCodeService
+    private readonly digitCodeService: DigitCodeService,
+    private readonly emailService: EmailService
   ) {}
 
   async createUser(userDTO: CreateUserDto): Promise<{ error: boolean; data: string }> {
@@ -46,7 +48,7 @@ export class AuthService {
   
       const getStreamTokenResponse = await this.getStreamService.getUserToken(userRef);
   
-      await this.prisma.guardian.create({
+      const user = await this.prisma.guardian.create({
         data: { 
           ...userDTO, 
           passwordHash: hashedPassword, 
@@ -54,6 +56,8 @@ export class AuthService {
           getStreamToken: getStreamTokenResponse.token 
         }
       });
+
+      await this.emailService.sendMailWelcome(user.email, user.name);
   
       return { error: false, data: "Usuário criado com sucesso!" };
     } catch (error) {

@@ -167,7 +167,7 @@ export const RecoveryPasswordTemplate = `
                                         <tr>
                                             <td class="pad">
                                                 <div style="color:#131B25;font-family:Helvetica Neue, Helvetica, Arial, sans-serif;font-size:14px;line-height:120%;text-align:left;mso-line-height-alt:16.8px;">
-                                                    <p style="margin: 0; word-break: break-word; color:#131B25;"><span>Está com problemas? <a href="https://crxautomation.com.br/" target="_blank" title="@motofastbrasil" style="text-decoration: none; color: #fff;" rel="noopener"><strong>@motofastbrasil</strong></a></span></p>
+                                                    <p style="margin: 0; word-break: break-word; color:#131B25;"><span>Está com problemas? <a href="https://pedcomvc.club/" target="_blank" title="@pedcomvc" style="text-decoration: none; color: #fff;" rel="noopener"><strong>@pedcomvc</strong></a></span></p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -202,8 +202,8 @@ export const RecoveryPasswordTemplate = `
                                             <td class="pad">
                                                 <div class="alignment" align="center">
                                                 <div style="max-width: 245px; margin: 0 auto;">
-                                                    <a href="https://crxautomation.com.br/" target="_blank" style="outline:none" tabindex="-1">
-                                                        <img src="https://crxautomation.com.br/assets/img/logo/logo-white.png" style="display: inline-block; height: auto; border: 0; width: 100%;" width="170" alt="MotoFast" title="">
+                                                    <a href="https://pedcomvc.club/" target="_blank" style="outline:none" tabindex="-1">
+                                                        <img src="https://pedcomvc.club/logo.png" style="display: inline-block; height: auto; border: 0; width: 100%;" width="170" alt="pedcomvc" title="">
                                                     </a>
                                                 </div>
                                             </div>
@@ -216,7 +216,7 @@ export const RecoveryPasswordTemplate = `
                                                 <div class="alignment" align="center">
                                                     <table class="social-table" width="72px" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; display: inline-block;">
                                                         <tr>
-                                                            <td style="padding:0 2px 0 2px;"><a href="https://crxautomation.com.br/" target="_blank"><img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/instagram@2x.png" width="32" height="32" alt="Instagram" title="instagram" style="display: block; height: auto; border: 0;"></a></td>
+                                                            <td style="padding:0 2px 0 2px;"><a href="https://pedcomvc.club/" target="_blank"><img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/instagram@2x.png" width="32" height="32" alt="Instagram" title="instagram" style="display: block; height: auto; border: 0;"></a></td>
                                                         </tr>
                                                     </table>
                                                 </div>
@@ -227,7 +227,7 @@ export const RecoveryPasswordTemplate = `
                                         <tr>
                                             <td class="pad">
                                                 <div style="color:#131B25;font-family:Helvetica Neue, Helvetica, Arial, sans-serif;font-size:14px;line-height:120%;text-align:center;mso-line-height-alt:16.8px;">
-                                                    <p style="margin: 0; word-break: break-word;">Este Código expirará nas próximas 2 horas.<br> Sinta-se à vontade para entrar em contato conosco em contato@crxautomation.com.br </p>
+                                                    <p style="margin: 0; word-break: break-word;">Este Código expirará nas próximas 2 horas.<br> Sinta-se à vontade para entrar em contato conosco em contato@pedcomvc.club </p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -236,7 +236,7 @@ export const RecoveryPasswordTemplate = `
                                         <tr>
                                             <td class="pad">
                                                 <div style="color:#131B25;font-family:Helvetica Neue, Helvetica, Arial, sans-serif;font-size:12px;line-height:120%;text-align:center;mso-line-height-alt:14.399999999999999px;">
-                                                    <p style="margin: 0; word-break: break-word;"><span>Copyright© 2024 CRX Signator.</span></p>
+                                                    <p style="margin: 0; word-break: break-word;"><span>Copyright© 2025 - PedComVc.</span></p>
                                                 </div>
                                             </td>
                                         </tr>

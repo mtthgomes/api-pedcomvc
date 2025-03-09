@@ -84,8 +84,6 @@ export class TokenUserService {
     if (!tokenRecord) return { error: true, data: "logout" };
     if (!decryptionResult.data.userId) return { error: true, data: "logout" };
 
-    console.log(decryptionResult.data.userId)
-
     const user = await this.prisma.guardian.findUnique({ where: { id: decryptionResult.data.userId } });
 
     if (tokenRecord.authExpiry < new Date()) {

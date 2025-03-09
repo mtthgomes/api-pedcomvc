@@ -1,10 +1,12 @@
 import { PrismaService } from '@app/shared/database/prisma.service';
+import { MyLogger } from '@app/shared/services/logger.service';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class DoctorDependentService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly logger: MyLogger
   ) {}
 
   async list(doctorId: string): Promise<{ error: boolean; data: string|object }> {
@@ -24,7 +26,7 @@ export class DoctorDependentService {
 
       return { error: false, data: dependents };
     } catch (error) {
-      console.error('LIST_DEPENDENTS_ERROR_DOCTOR', error);
+      this.logger.error('LIST_DEPENDENTS_ERROR_DOCTOR', error);
       return { error: true, data: `Erro ao listar dependentes` };
     }
   }
@@ -43,7 +45,7 @@ export class DoctorDependentService {
 
       return { error: false, data: dependent };
     } catch (error) {
-      console.error('FIND_CHAT_BY_ID_ERROR_DOCTOR', error);
+      this.logger.error('FIND_CHAT_BY_ID_ERROR_DOCTOR', error);
       return { error: true, data: `Erro ao buscar dependente: ${error.message}` };
     }
   }

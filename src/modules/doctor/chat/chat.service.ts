@@ -54,7 +54,7 @@ export class DoctorChatService {
     try {
       const dependent = await this.prisma.chat.findUnique({
         where: { getStreamChatId: slug },
-        include: { doctor: true, dependent: true }
+        include: { doctor: true, dependent: {include: {guardian: true}} }
       });
 
       if (!dependent) {

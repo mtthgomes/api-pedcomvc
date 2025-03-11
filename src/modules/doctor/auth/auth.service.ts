@@ -147,13 +147,41 @@ export class AuthService {
           if (imageUrl.error) {
             return { error: true, data: imageUrl.data };
           }
+
+          const state = await this.prisma.state.findUnique({
+            where: { id: dependentDto.stateId },
+          });
+    
+          if (!state) {
+            return { error: true, data: 'Estado não encontrado no sistema' };
+          }
+
+          const city = await this.prisma.city.findUnique({
+            where: { id: dependentDto.cityId },
+          });
+    
+          if (!city) {
+            return { error: true, data: 'Cidade não encontrado no sistema' };
+          }
+
+          const rqe = await this.prisma.doctor.findUnique({
+            where: {rqe: dependentDto.rqe}
+          })
+
+          if (rqe) {
+            return { error: true, data: 'Rqe já existe no sistema...' };
+          }
     
           const dependent = await this.prisma.doctor.update({
             where: {id: doctorId},
             data: {
               description: dependentDto.description,
               photo: imageUrl.data,
-              status: 'ACTIVE'
+              status: 'ACTIVE',
+              stateId: dependentDto.stateId,
+              cityId: dependentDto.cityId,
+              specialty: dependentDto.specialty,
+              rqe: dependentDto.rqe
             },
           });
     

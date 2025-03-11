@@ -45,6 +45,45 @@ enum RelationshipType {
   OTHER
 }
 
+/// **Especialidades Pediatricas**
+enum PediatricSpecialty {
+  GENERAL_PEDIATRICS
+  ALLERGY_IMMUNOLOGY
+  PEDIATRIC_CARDIOLOGY
+  PEDIATRIC_ENDOCRINOLOGY
+  PEDIATRIC_GASTROENTEROLOGY
+  PEDIATRIC_HEMATOLOGY
+  PEDIATRIC_INFECTOLOGY
+  ADOLESCENT_MEDICINE
+  NEONATAL_INTENSIVE_CARE
+  PEDIATRIC_INTENSIVE_CARE
+  PEDIATRIC_NEPHROLOGY
+  PEDIATRIC_NEUROLOGY
+  PEDIATRIC_NUTROLOGY
+  PEDIATRIC_ONCOLOGY
+  PEDIATRIC_PNEUMOLOGY
+  PEDIATRIC_RHEUMATOLOGY
+}
+
+model RiskClassification {
+  id                String   @id @default(uuid())
+  age_min           Int?
+  age_max           Int?
+  has_comorbidities Boolean
+  risk_level        String
+  recommendation    String
+  symptoms          RiskSymptoms[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model RiskSymptoms {
+  id                   String @id @default(uuid())
+  symptom              String
+  riskClassificationId String
+  riskClassification   RiskClassification @relation(fields: [riskClassificationId], references: [id])
+}
+
 model Country {
   id       String   @id @default(uuid())
   name     String   @unique
@@ -144,7 +183,8 @@ model Doctor {
   gender          Gender
   prefix          String
   crm             String   @unique
-  rqe             String?  // Registro de Especialidade
+  rqe             String?  @unique
+  specialty       PediatricSpecialty?
   status          StatusType @default(PENDING)
   userType        UserType @default(DOCTOR)
   roles           Json     @default("[\"ROLE_DOCTOR\"]")

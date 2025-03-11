@@ -36,7 +36,7 @@ export class DoctorDependentService {
     try {
       const dependent = await this.prisma.dependent.findUnique({
         where: { id },
-        include: { doctor: true }
+        include: { doctor: true, guardian: true }
       });
 
       if (!dependent) {

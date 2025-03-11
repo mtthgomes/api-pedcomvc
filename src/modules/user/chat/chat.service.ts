@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ChatDto } from './dto/create.dto';
 import { ChatValidator } from './validator/chat.validator';
 import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
-import slug from 'slug';
+const slugify = require('slugify');
 import { MyLogger } from '@app/shared/services/logger.service';
 
 @Injectable()
@@ -42,7 +42,7 @@ export class UserChatService {
         return validation;
       }
   
-      let chatSlug = slug(`Paciente-${guardian.name}`);
+      let chatSlug = slugify(`Paciente-${guardian.name}`, '_');
       let slugValid = await this.prisma.chat.findUnique({
         where: { getStreamChatId: chatSlug },
       });
@@ -50,7 +50,7 @@ export class UserChatService {
       // 🔹 Se o slug já existir, adiciona um número até encontrar um nome único
       let count = 1;
       while (slugValid) {
-        chatSlug = `${slug(`Paciente-${guardian.name}`)}_${count}`;
+        chatSlug = `${slugify(`Paciente-${guardian.name}`)}_${count}`;
         slugValid = await this.prisma.chat.findUnique({
           where: { getStreamChatId: chatSlug },
         });

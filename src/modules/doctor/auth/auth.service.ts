@@ -56,6 +56,12 @@ export class AuthService {
       } else {
         prefix="Dra"
       }
+
+      const crm = await this.prisma.doctor.findUnique({ where: { crm: doctorDTO.crm } });
+  
+      if (crm) {
+        return { error: true, data: "CRM já cadastrado" };
+      }
   
       await this.prisma.doctor.create({
         data: {

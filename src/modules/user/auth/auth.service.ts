@@ -48,7 +48,7 @@ export class AuthService {
   
       const getStreamTokenResponse = await this.getStreamService.getUserToken(userRef);
   
-      const user = await this.prisma.guardian.create({
+      await this.prisma.guardian.create({
         data: { 
           ...userDTO, 
           passwordHash: hashedPassword, 
@@ -57,7 +57,7 @@ export class AuthService {
         }
       });
 
-      await this.emailService.sendMailWelcome(user.email, user.name);
+      // await this.emailService.sendMailWelcome(user.email, user.name);
   
       return { error: false, data: "Usuário criado com sucesso!" };
     } catch (error) {
@@ -77,16 +77,14 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string): Promise<{ error: boolean; data: any }> {
-    const user = await this.prisma.guardian.findUnique({ where: { email } });
+    const user = await this.prisma.guardian.findUnique({ where: { email }, include: {tokens: true} });
   
     if (!user) {
       return { error: true, data: "As suas credenciais de acesso estão incorretas." };
     }
   
-    const tokens = await this.prisma.token.findMany({ where: { guardianId: user.id } });
-  
     if (user.status !== StatusType.ACTIVE) {
-      if (tokens.length > 0) {
+      if (user.tokens.length > 0) {
         await this.prisma.token.deleteMany({ where: { guardianId: user.id } });
       }
       return { error: true, data: "Acesso bloqueado. Entre em contato com o suporte." };

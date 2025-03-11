@@ -46,7 +46,8 @@ export class UserDependentService {
           allergy: dependentDto.allergy,
           otherInfo: dependentDto.otherInfo,
           guardianId: userId,
-          gender: dependentDto.gender
+          gender: dependentDto.gender,
+          relationship: dependentDto.relationship
         },
       });
 

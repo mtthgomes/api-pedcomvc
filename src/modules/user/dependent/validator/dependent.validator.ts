@@ -14,6 +14,11 @@ export class DependentValidator {
       return { error: true, data: 'Gênero não existe' };
     }
 
+    if(dependentDto.relationship != 'GRANDPARENT' && dependentDto.relationship != 'OTHER' 
+      && dependentDto.relationship != 'PARENT' && dependentDto.relationship != 'SIBLING' && dependentDto.relationship != 'UNCLE'){
+      return { error: true, data: 'Esse relacionamento não existe' };
+    }
+
     return { error: false, data: 'Validação bem-sucedida.' };
   }
 }

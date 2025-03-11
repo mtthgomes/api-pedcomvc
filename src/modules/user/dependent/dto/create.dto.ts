@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsDate, IsEnum } from 'class-validator';
-import { Gender, StatusType } from '@prisma/client';
+import { Gender, RelationshipType, StatusType } from '@prisma/client';
 
 export class DependentDto {
   @IsString()
@@ -26,4 +26,7 @@ export class DependentDto {
 
   @IsEnum(Gender)
   gender: Gender;
+
+  @IsEnum(RelationshipType)
+  relationship: RelationshipType;
 }

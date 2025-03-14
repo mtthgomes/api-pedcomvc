@@ -16,7 +16,9 @@ export class UserDoctorService {
           id: true,
           name: true,
           photo: true,
-          getStreamRef: true
+          getStreamRef: true,
+          city: true,
+          state: true
         },
         where: {status: 'ACTIVE'}
       });
@@ -32,7 +34,7 @@ export class UserDoctorService {
   async findById(id: string): Promise<{ error: boolean; data: any }> {
     try {
       const doctor = await this.prisma.doctor.findUnique({
-        where: { id },
+        where: { id }, include: { city: true, state: true },
       });
 
       if (!doctor) {

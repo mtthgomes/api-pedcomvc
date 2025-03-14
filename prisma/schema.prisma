@@ -132,7 +132,7 @@ model Guardian {
   status          StatusType @default(ACTIVE)
   userType        UserType @default(GUARDIAN)
   roles           Json     @default("[\"ROLE_USER\"]")
-  getStreamRef    String
+  getStreamRef    String   @unique
   getStreamToken  String?
   firebaseToken   String?
   termsAccepted   Boolean  @default(true)
@@ -152,10 +152,10 @@ model Dependent {
   name            String
   photo           String?  // URL of the photo
   birthDate       DateTime
-  comorbidity     String?
-  medication      String?
-  allergy         String?
-  otherInfo       String?
+  comorbidity     String? @db.VarChar(150)
+  medication      String? @db.VarChar(150)
+  allergy         String? @db.VarChar(150)
+  otherInfo       String? @db.VarChar(150)
   relationship    RelationshipType
   status          StatusType @default(ACTIVE)
   guardianId      String
@@ -188,7 +188,7 @@ model Doctor {
   status          StatusType @default(PENDING)
   userType        UserType @default(DOCTOR)
   roles           Json     @default("[\"ROLE_DOCTOR\"]")
-  getStreamRef    String
+  getStreamRef    String   @unique
   getStreamToken  String
   firebaseToken   String?
   termsAccepted   Boolean  @default(true)
@@ -221,7 +221,6 @@ model Admin {
   id              String   @id @default(uuid())
   name            String
   email           String   @unique
-  phone           String
   cpf             String   @unique
   passwordHash    String
   roles           Json     @default("[\"ROLE_ADMIN\"]")

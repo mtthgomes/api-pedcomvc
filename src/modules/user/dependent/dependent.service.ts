@@ -5,41 +5,34 @@ import { MulterFile } from '@app/shared/interfaces/multer';
 import { ImageUploadService } from '@app/shared/services/image-upload.service';
 import { DependentValidator } from './validator/dependent.validator';
 import { MyLogger } from '@app/shared/services/logger.service';
+import { R2UploadService } from '@app/shared/services/r2/cloudflare-r2.service';
 
 @Injectable()
 export class UserDependentService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly imageUploadService: ImageUploadService,
+    private readonly imageUploadService: R2UploadService,
     private readonly logger: MyLogger
   ) {}
 
   /// **🔥 Cria um novo dependente**
   async create(dependentDto: DependentDto, userId: string, image_user: MulterFile): Promise<{ error: boolean; data: string }> {
     try {
-      // Verifica se o guardião existe
-      const guardian = await this.prisma.guardian.findUnique({
-        where: { id: userId },
-      });
-
-      if (!guardian) {
-        return { error: true, data: 'Guardião não encontrado no sistema' };
-      }
-
       const validation = DependentValidator.validate(dependentDto);
       if (validation.error) {
         return validation;
       }
 
-      const imageUrl = await this.imageUploadService.uploadImage(image_user);
-      if (imageUrl.error) {
-        return { error: true, data: imageUrl.data };
+      const image = await this.imageUploadService.uploadFile(image_user);
+
+      if(image.error === true){
+        return { error: true, data: image.data };
       }
 
-      const dependent = await this.prisma.dependent.create({
+      await this.prisma.dependent.create({
         data: {
           name: dependentDto.name,
-          photo: imageUrl.data,
+          photo: image.data,
           birthDate: new Date(dependentDto.birthDate),
           comorbidity: dependentDto.comorbidity,
           medication: dependentDto.medication,
@@ -51,7 +44,7 @@ export class UserDependentService {
         },
       });
 
-      return { error: false, data: dependent.id };
+      return { error: false, data: "Dependente criado com sucesso!"};
     } catch (error) {
       this.logger.error('CREATE_DEPENDENT_ERROR', error);
       return { error: true, data: `Erro ao criar dependente: ${error.message}` };

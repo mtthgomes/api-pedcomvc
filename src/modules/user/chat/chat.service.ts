@@ -18,13 +18,17 @@ export class UserChatService {
   async create(chatDto: ChatDto): Promise<{ error: boolean; data: string }> {
     try {
       // 🔹 Verifica se o dependente existe
-      const guardian = await this.prisma.dependent.findUnique({
+      const dependent = await this.prisma.dependent.findUnique({
         where: { id: chatDto.dependentId },
         include: { guardian: true },
       });
   
-      if (!guardian) {
+      if (!dependent) {
         return { error: true, data: 'Dependente não encontrado no sistema' };
+      }
+
+      if(dependent.doctorId !== null){
+        return { error: false, data: '' };;
       }
   
       // 🔹 Verifica se o médico existe
@@ -42,7 +46,7 @@ export class UserChatService {
         return validation;
       }
   
-      let chatSlug = slugify(`Paciente-${guardian.name}`, '_');
+      let chatSlug = slugify(`Paciente-${dependent.name}`, '_');
       let slugValid = await this.prisma.chat.findUnique({
         where: { getStreamChatId: chatSlug },
       });
@@ -50,7 +54,7 @@ export class UserChatService {
       // 🔹 Se o slug já existir, adiciona um número até encontrar um nome único
       let count = 1;
       while (slugValid) {
-        chatSlug = `${slugify(`Paciente-${guardian.name}`)}_${count}`;
+        chatSlug = `${slugify(`Paciente-${dependent.name}`)}_${count}`;
         slugValid = await this.prisma.chat.findUnique({
           where: { getStreamChatId: chatSlug },
         });
@@ -60,8 +64,8 @@ export class UserChatService {
       // 🔹 Criar o chat no Stream
       const chat = await this.getStreamService.createChat({
         channelId: chatSlug,
-        userId: guardian.guardian.getStreamRef,
-        members: [guardian.guardian.getStreamRef, doctor.getStreamRef],
+        userId: dependent.guardian.getStreamRef,
+        members: [dependent.guardian.getStreamRef, doctor.getStreamRef],
       });
   
       // 🔹 Atualizar o médico vinculado ao dependente

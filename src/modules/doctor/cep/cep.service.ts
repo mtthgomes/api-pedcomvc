@@ -24,7 +24,7 @@ export class DoctorCepService {
             data: {
               name: stateName,
               abbreviation: stateCode,
-              countryId: "5f4f6552-e23f-4ee0-ae9e-2c86dd440fe5"
+              countryId: "af8f4513-ef1f-45bf-b46d-d733201736b9"
             }
           });
   

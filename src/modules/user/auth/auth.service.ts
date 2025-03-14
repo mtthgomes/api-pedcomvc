@@ -48,7 +48,7 @@ export class AuthService {
   
       const getStreamTokenResponse = await this.getStreamService.getUserToken(userRef);
   
-      await this.prisma.guardian.create({
+      const user = await this.prisma.guardian.create({
         data: { 
           ...userDTO, 
           passwordHash: hashedPassword, 
@@ -57,7 +57,7 @@ export class AuthService {
         }
       });
 
-      // await this.emailService.sendMailWelcome(user.email, user.name);
+      this.emailService.sendMailWelcome(user.email, user.name);
   
       return { error: false, data: "Usuário criado com sucesso!" };
     } catch (error) {

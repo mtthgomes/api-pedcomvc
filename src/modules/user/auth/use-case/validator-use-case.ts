@@ -7,6 +7,23 @@ import { isValidCPF } from "src/shared/validators/cpf.validator";
 export class ValidatorUserUseCase {
   constructor( private prisma: PrismaService){}
 
+  async validateAll(userDTO: CreateUserDto): Promise<{ error: boolean; data: string }> {
+    // Executa todas as validações em paralelo
+    const [nullable, cpf, existe] = await Promise.all([
+      this.nullable(userDTO),
+      this.cpf(userDTO.cpf),
+      this.existe(userDTO)
+    ]);
+
+    // Retorna o primeiro erro encontrado
+    if (nullable.error) return nullable;
+    if (cpf.error) return cpf;
+    if (existe.error) return existe;
+
+    // Todas as validações passaram
+    return { error: false, data: "Todos os dados são válidos" };
+  }
+
   async cpf(cpf: string): Promise<{ error: boolean; data: string }> {
     if (!isValidCPF(cpf)) {
       return { error: true, data: 'CPF inválido' };

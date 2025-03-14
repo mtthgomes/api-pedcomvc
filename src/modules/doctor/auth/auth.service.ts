@@ -13,6 +13,7 @@ import { firebaseTokenDto } from './dto/firebase.dto';
 import { descriptionDto } from './dto/profile';
 import { MulterFile } from '@app/shared/interfaces/multer';
 import { ImageUploadService } from '@app/shared/services/image-upload.service';
+import { R2UploadService } from '@app/shared/services/r2/cloudflare-r2.service';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +25,7 @@ export class AuthService {
     private readonly tokenService: tokenDoctorService,
     private readonly getStreamService: GetStreamService,
     private readonly digitCodeService: DigitCodeService,
-    private readonly imageUploadService: ImageUploadService,
+    private readonly imageUploadService: R2UploadService
   ) {}
 
   async createDoctor(doctorDTO: CreateDoctorDto): Promise<{ error: boolean; data: string }> {
@@ -148,11 +149,6 @@ export class AuthService {
           if(!dependentDto.description){
             return { error: true, data: 'Descrição não enviada' };
           }
-    
-          const imageUrl = await this.imageUploadService.uploadImage(image_user);
-          if (imageUrl.error) {
-            return { error: true, data: imageUrl.data };
-          }
 
           const state = await this.prisma.state.findUnique({
             where: { id: dependentDto.stateId },
@@ -177,12 +173,18 @@ export class AuthService {
           if (rqe) {
             return { error: true, data: 'Rqe já existe no sistema...' };
           }
+
+          const image = await this.imageUploadService.uploadFile(image_user);
+
+          if(image.error === true){
+            return { error: true, data: image.data };
+          }
     
           const dependent = await this.prisma.doctor.update({
             where: {id: doctorId},
             data: {
               description: dependentDto.description,
-              photo: imageUrl.data,
+              photo: image.data,
               status: 'ACTIVE',
               stateId: dependentDto.stateId,
               cityId: dependentDto.cityId,

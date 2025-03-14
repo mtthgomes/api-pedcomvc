@@ -4,6 +4,7 @@ import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { EmailService } from '@app/shared/services/email.service';
 import { MyLogger } from '@app/shared/services/logger.service';
 import { PasswordService } from '@app/shared/services/password.service';
+import { sendVerificationCode } from '@app/shared/services/whatsapp/whatsapp.service';
 import { Injectable } from '@nestjs/common';
 import { UserType } from '@prisma/client';
 
@@ -14,7 +15,7 @@ export class GuardianRecoveryService {
     private readonly logger: MyLogger,
     private readonly generateCode: DigitCodeService,
     private readonly passwordService: PasswordService,
-    private readonly emailService: EmailService
+    private readonly emailService: EmailService,
   ) {}
 
   async startRecovery(emailDto: EmailRecoveryDto): Promise<{ error: boolean; data: string }> {
@@ -50,7 +51,11 @@ export class GuardianRecoveryService {
         create: tokenData,
       });
 
-      await this.emailService.sendMailRecoveryPassword(guardian.email, guardian.name, code);
+      if(emailDto.typeSend === 'whatsapp'){
+        await sendVerificationCode("55"+guardian.whatsapp, code);
+      } else {
+        await this.emailService.sendMailRecoveryPassword(guardian.email, guardian.name, code);
+      }
 
       return { error: false, data: 'O pedido de recuperação de senha foi criado com sucesso.' };
     } catch (error) {

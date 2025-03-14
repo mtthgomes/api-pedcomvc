@@ -3,6 +3,9 @@ import { IsString, IsEmail } from 'class-validator';
 export class EmailRecoveryDto {
   @IsEmail()
   email: string;
+
+  @IsString()
+  typeSend: string
 }
 
 export class ValidateRecoveryDto {
@@ -11,6 +14,9 @@ export class ValidateRecoveryDto {
 
   @IsString()
   token: string;
+
+  @IsString()
+  typeSend: string
 }
 
 export class RecoveryDataDto {
@@ -22,4 +28,7 @@ export class RecoveryDataDto {
 
   @IsString()
   password: string;
+
+  @IsString()
+  typeSend: string
 }

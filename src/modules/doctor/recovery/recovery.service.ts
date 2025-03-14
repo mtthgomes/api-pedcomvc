@@ -50,7 +50,7 @@ export class DoctorRecoveryService {
         create: tokenData,
       });
 
-      await this.emailService.sendMailRecoveryPassword(doctor.prefix + '' + doctor.email, doctor.name, code);
+      await this.emailService.sendMailRecoveryPassword(doctor.email,doctor.prefix + '' + doctor.name, code);
 
       return { error: false, data: 'O pedido de recuperação de senha foi criado com sucesso.' };
     } catch (error) {

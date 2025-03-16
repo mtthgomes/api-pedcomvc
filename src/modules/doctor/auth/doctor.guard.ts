@@ -77,12 +77,12 @@ export class tokenDoctorService {
     const decryptionResult = await this.decryptToken(authToken);
     if (decryptionResult.error) return { error: true, data: "logout" };
 
-    const tokenRecord = await this.prisma.token.findFirst({ where: { authToken } });
+    const tokenRecord = await this.prisma.token.findFirst({ where: { authToken, userType: 'DOCTOR' } });
 
     if (!tokenRecord) return { error: true, data: "logout" };
     if (!decryptionResult.data.userId) return { error: true, data: "logout" };
 
-    const user = await this.prisma.doctor.findUnique({ where: { id: decryptionResult.data.userId } });
+    const user = await this.prisma.doctor.findUnique({ where: { id: decryptionResult.data.userId }, include: {accountVerification: true} });
 
     if (tokenRecord.authExpiry < new Date()) {
       const newTokens = await this.refreshTokens(tokenRecord.resetToken);

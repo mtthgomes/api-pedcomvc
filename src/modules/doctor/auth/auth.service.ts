@@ -7,13 +7,13 @@ import * as bcryptjs from 'bcryptjs';
 import { ValidatorDoctorUseCase } from './use-case/validator-use-case';
 import { StatusType } from '@prisma/client';
 import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
-import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { CreateDoctorDto } from '@app/shared/dtos/auth/createDoctor.dto';
 import { firebaseTokenDto } from './dto/firebase.dto';
 import { descriptionDto } from './dto/profile';
 import { MulterFile } from '@app/shared/interfaces/multer';
-import { ImageUploadService } from '@app/shared/services/image-upload.service';
 import { R2UploadService } from '@app/shared/services/r2/cloudflare-r2.service';
+import { EmailService } from '@app/shared/services/email.service';
+import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
 
 @Injectable()
 export class AuthService {
@@ -24,8 +24,9 @@ export class AuthService {
     private readonly ValidatorUser: ValidatorDoctorUseCase,
     private readonly tokenService: tokenDoctorService,
     private readonly getStreamService: GetStreamService,
-    private readonly digitCodeService: DigitCodeService,
-    private readonly imageUploadService: R2UploadService
+    private readonly imageUploadService: R2UploadService,
+    private readonly emailService: EmailService,
+    private readonly getStreamRefValidator: GetStreamRefValidator
   ) {}
 
   async createDoctor(doctorDTO: CreateDoctorDto): Promise<{ error: boolean; data: string }> {
@@ -40,16 +41,20 @@ export class AuthService {
   
     try {
       const hashedPassword = await this.passwordService.hashPassword(doctorDTO.passwordHash);
-      const userRef = this.digitCodeService.generateThirteenDigitCode();
-  
+      const newGetStreamRef = await this.getStreamRefValidator.generateAndValidateToken();
+
+      if (newGetStreamRef.error) {
+        return { error: true, data: "Erro ao criar Usuário." };
+      }
+
       await this.getStreamService.createUser({ 
-        id: userRef, 
+        id: newGetStreamRef.data, 
         name: doctorDTO.name, 
         email: doctorDTO.email, 
-        referenceId: userRef 
+        referenceId: newGetStreamRef.data 
       });
   
-      const getStreamTokenResponse = await this.getStreamService.getUserToken(userRef);
+      const getStreamTokenResponse = await this.getStreamService.getUserToken(newGetStreamRef.data);
 
       let prefix = ''
       if(doctorDTO.gender == 'MALE'){
@@ -68,13 +73,15 @@ export class AuthService {
         data: {
           ...doctorDTO,
           passwordHash: hashedPassword, 
-          getStreamRef: userRef, 
+          getStreamRef: newGetStreamRef.data, 
           getStreamToken: getStreamTokenResponse.token,
           prefix
         }
       });
+
+      this.emailService.sendMailDoctorWelcome(doctorDTO.email ,`${prefix} ${doctorDTO.name}`);
   
-      return { error: false, data: "Usuário criado com sucesso!" };
+      return { error: false, data: "Médico criado com sucesso!" };
     } catch (error) {
       await this.deleteUser(doctorDTO.email);
       this.logger.error('CREATE_USER_ERROR', error);
@@ -93,7 +100,7 @@ export class AuthService {
   }
 
   async validateDoctor(email: string, password: string): Promise<{ error: boolean; data: any }> {
-    const user = await this.prisma.doctor.findUnique({ where: { email } });
+    const user = await this.prisma.doctor.findUnique({ where: { email }, include: {accountVerification: true} });
   
     if (!user) {
       return { error: true, data: "As suas credenciais de acesso estão incorretas." };

@@ -11,6 +11,7 @@ import { GetStreamService } from '@app/shared/services/microservice/getstream.se
 import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { firebaseTokenDto } from './dto/firebase.dto';
 import { EmailService } from '@app/shared/services/email.service';
+import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
 
 @Injectable()
 export class AuthService {
@@ -21,8 +22,8 @@ export class AuthService {
     private readonly ValidatorUser: ValidatorUserUseCase,
     private readonly tokenService: TokenUserService,
     private readonly getStreamService: GetStreamService,
-    private readonly digitCodeService: DigitCodeService,
-    private readonly emailService: EmailService
+    private readonly emailService: EmailService,
+    private readonly getStreamRefValidator: GetStreamRefValidator
   ) {}
 
   async createUser(userDTO: CreateUserDto): Promise<{ error: boolean; data: string }> {
@@ -37,22 +38,26 @@ export class AuthService {
   
     try {
       const hashedPassword = await this.passwordService.hashPassword(userDTO.passwordHash);
-      const userRef = this.digitCodeService.generateThirteenDigitCode();
+      const newGetStreamRef = await this.getStreamRefValidator.generateAndValidateToken();
+
+      if (newGetStreamRef.error) {
+        return { error: true, data: "Erro ao criar Usuário." };
+      }
   
       await this.getStreamService.createUser({ 
-        id: userRef, 
+        id: newGetStreamRef.data, 
         name: userDTO.name, 
         email: userDTO.email, 
-        referenceId: userRef 
+        referenceId: newGetStreamRef.data 
       });
   
-      const getStreamTokenResponse = await this.getStreamService.getUserToken(userRef);
+      const getStreamTokenResponse = await this.getStreamService.getUserToken(newGetStreamRef.data);
   
       const user = await this.prisma.guardian.create({
         data: { 
           ...userDTO, 
           passwordHash: hashedPassword, 
-          getStreamRef: userRef, 
+          getStreamRef: newGetStreamRef.data, 
           getStreamToken: getStreamTokenResponse.token 
         }
       });
@@ -77,7 +82,7 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string): Promise<{ error: boolean; data: any }> {
-    const user = await this.prisma.guardian.findUnique({ where: { email }, include: {tokens: true} });
+    const user = await this.prisma.guardian.findUnique({ where: { email }, include: {tokens: true, accountVerification: true} });
   
     if (!user) {
       return { error: true, data: "As suas credenciais de acesso estão incorretas." };

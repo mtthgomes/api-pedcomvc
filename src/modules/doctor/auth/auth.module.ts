@@ -11,6 +11,7 @@ import { HttpModule } from '@nestjs/axios';
 import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { R2UploadService } from '@app/shared/services/r2/cloudflare-r2.service';
+import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
 
 @Module({
   imports: [
@@ -26,6 +27,6 @@ import { R2UploadService } from '@app/shared/services/r2/cloudflare-r2.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [tokenDoctorService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorDoctorUseCase, GetStreamService, DigitCodeService, R2UploadService],
+  providers: [tokenDoctorService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorDoctorUseCase, GetStreamService, DigitCodeService, R2UploadService, GetStreamRefValidator],
 })
 export class DoctorAuthModule {}

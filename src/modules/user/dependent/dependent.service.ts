@@ -2,7 +2,6 @@ import { PrismaService } from '@app/shared/database/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { DependentDto } from './dto/create.dto';
 import { MulterFile } from '@app/shared/interfaces/multer';
-import { ImageUploadService } from '@app/shared/services/image-upload.service';
 import { DependentValidator } from './validator/dependent.validator';
 import { MyLogger } from '@app/shared/services/logger.service';
 import { R2UploadService } from '@app/shared/services/r2/cloudflare-r2.service';

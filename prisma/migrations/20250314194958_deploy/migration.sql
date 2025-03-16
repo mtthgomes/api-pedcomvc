@@ -82,6 +82,7 @@ CREATE TABLE `Guardian` (
     UNIQUE INDEX `Guardian_email_key`(`email`),
     UNIQUE INDEX `Guardian_whatsapp_key`(`whatsapp`),
     UNIQUE INDEX `Guardian_cpf_key`(`cpf`),
+    UNIQUE INDEX `Guardian_getStreamRef_key`(`getStreamRef`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -91,10 +92,10 @@ CREATE TABLE `Dependent` (
     `name` VARCHAR(191) NOT NULL,
     `photo` VARCHAR(191) NULL,
     `birthDate` DATETIME(3) NOT NULL,
-    `comorbidity` VARCHAR(191) NULL,
-    `medication` VARCHAR(191) NULL,
-    `allergy` VARCHAR(191) NULL,
-    `otherInfo` VARCHAR(191) NULL,
+    `comorbidity` VARCHAR(150) NULL,
+    `medication` VARCHAR(150) NULL,
+    `allergy` VARCHAR(150) NULL,
+    `otherInfo` VARCHAR(150) NULL,
     `relationship` ENUM('PARENT', 'UNCLE', 'SIBLING', 'GRANDPARENT', 'OTHER') NOT NULL,
     `status` ENUM('ACTIVE', 'INACTIVE', 'PENDING') NOT NULL DEFAULT 'ACTIVE',
     `guardianId` VARCHAR(191) NOT NULL,
@@ -138,6 +139,7 @@ CREATE TABLE `Doctor` (
     UNIQUE INDEX `Doctor_whatsapp_key`(`whatsapp`),
     UNIQUE INDEX `Doctor_crm_key`(`crm`),
     UNIQUE INDEX `Doctor_rqe_key`(`rqe`),
+    UNIQUE INDEX `Doctor_getStreamRef_key`(`getStreamRef`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

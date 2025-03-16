@@ -11,6 +11,7 @@ import { HttpModule } from '@nestjs/axios';
 import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { EmailService } from '@app/shared/services/email.service';
+import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { EmailService } from '@app/shared/services/email.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService],
-  exports: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService],
+  providers: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService, GetStreamRefValidator],
+  exports: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService, GetStreamRefValidator],
 })
 export class UserAuthModule {}

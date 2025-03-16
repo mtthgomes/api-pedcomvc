@@ -4,6 +4,7 @@ import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { EmailService } from '@app/shared/services/email.service';
 import { MyLogger } from '@app/shared/services/logger.service';
 import { PasswordService } from '@app/shared/services/password.service';
+import { sendRecoveryCode } from '@app/shared/services/whatsapp/whatsapp.service';
 import { Injectable } from '@nestjs/common';
 import { UserType } from '@prisma/client';
 
@@ -50,7 +51,11 @@ export class DoctorRecoveryService {
         create: tokenData,
       });
 
-      await this.emailService.sendMailRecoveryPassword(doctor.email,doctor.prefix + '' + doctor.name, code);
+      if(emailDto.typeSend === 'whatsapp'){
+        await sendRecoveryCode(doctor.whatsapp, code);
+      } else {
+        await this.emailService.sendMailRecoveryPassword(doctor.email,doctor.prefix + '' + doctor.name, code);
+      }
 
       return { error: false, data: 'O pedido de recuperação de senha foi criado com sucesso.' };
     } catch (error) {
@@ -79,7 +84,11 @@ export class DoctorRecoveryService {
         where: { doctorId: doctor.id },
       });
 
-      await this.emailService.sendMailRecoveryPassword(doctor.email, doctor.name, recovery.token);
+      if(emailDto.typeSend === 'whatsapp'){
+        await sendRecoveryCode(doctor.whatsapp, recovery.token);
+      } else {
+        await this.emailService.sendMailRecoveryPassword(doctor.email,doctor.prefix + '' + doctor.name, recovery.token);
+      }
 
       return { error: false, data: 'O email foi enviado novamente...' };
     } catch (error) {

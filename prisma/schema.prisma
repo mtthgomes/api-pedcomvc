@@ -133,7 +133,7 @@ model Guardian {
   userType        UserType @default(GUARDIAN)
   roles           Json     @default("[\"ROLE_USER\"]")
   getStreamRef    String   @unique
-  getStreamToken  String?
+  getStreamToken  String
   firebaseToken   String?
   termsAccepted   Boolean  @default(true)
   createdAt       DateTime @default(now())
@@ -145,6 +145,7 @@ model Guardian {
   dependents      Dependent[]
   tokens          Token[]
   passwordRecovery PasswordRecovery?
+  accountVerification AccountVerification?
 }
 
 model Dependent {
@@ -197,11 +198,28 @@ model Doctor {
 
   city            City? @relation(fields: [cityId], references: [id])
   state           State? @relation(fields: [stateId], references: [id])
-
+  accountVerification AccountVerification?
   dependents      Dependent[]
   chats           Chat[]
   tokens          Token[]
   passwordRecovery PasswordRecovery?
+}
+
+model AccountVerification {
+  id               String   @id @default(uuid())
+  token            String
+  verificationMethod String 
+  status           Boolean  @default(false) // false = não verificado | true = verificado
+  verifiedAt       DateTime?  // Data de verificação (se verificado)
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  guardianId       String? @unique
+  doctorId         String? @unique
+
+  guardian         Guardian? @relation(fields: [guardianId], references: [id])
+  doctor           Doctor?   @relation(fields: [doctorId], references: [id])
 }
 
 model Chat {

@@ -4,7 +4,7 @@ import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { EmailService } from '@app/shared/services/email.service';
 import { MyLogger } from '@app/shared/services/logger.service';
 import { PasswordService } from '@app/shared/services/password.service';
-import { sendVerificationCode } from '@app/shared/services/whatsapp/whatsapp.service';
+import { sendRecoveryCode } from '@app/shared/services/whatsapp/whatsapp.service';
 import { Injectable } from '@nestjs/common';
 import { UserType } from '@prisma/client';
 
@@ -31,7 +31,7 @@ export class GuardianRecoveryService {
       const code = this.generateCode.generateSixDigitCode();
 
       const recoveryExpiry = new Date();
-      recoveryExpiry.setHours(recoveryExpiry.getHours() + 4);
+      recoveryExpiry.setHours(recoveryExpiry.getMinutes() + 30);
 
       const tokenData = {
         token: code,
@@ -52,7 +52,7 @@ export class GuardianRecoveryService {
       });
 
       if(emailDto.typeSend === 'whatsapp'){
-        await sendVerificationCode("55"+guardian.whatsapp, code);
+        await sendRecoveryCode(guardian.whatsapp, code);
       } else {
         await this.emailService.sendMailRecoveryPassword(guardian.email, guardian.name, code);
       }
@@ -84,9 +84,13 @@ export class GuardianRecoveryService {
         where: { guardianId: guardian.id },
       });
 
-      await this.emailService.sendMailRecoveryPassword(guardian.email, guardian.name, recovery.token);
+      if(emailDto.typeSend === 'whatsapp'){
+        await sendRecoveryCode(guardian.whatsapp, recovery.token);
+      } else {
+        await this.emailService.sendMailRecoveryPassword(guardian.email, guardian.name, recovery.token);
+      }
 
-      return { error: false, data: 'O email foi enviado novamente...' };
+      return { error: false, data: 'O Token foi enviado novamente...' };
     } catch (error) {
       this.logger.error('SEND_AGAIN_RECOVERY_GUARDIAN_ERROR', error);
       return { error: true, data: `Erro ao enviar novamente o token de recuperação` };
@@ -99,7 +103,7 @@ export class GuardianRecoveryService {
     });
 
     if (!guardian) {
-      return { error: true, data: 'Usuario não encontrado no sistema.' };
+      return { error: true, data: 'Usuário não encontrado no sistema.' };
     }
 
     try {
@@ -115,7 +119,7 @@ export class GuardianRecoveryService {
       const isValid = await this.isValid(validateData);
 
       if (isValid.error !== false) {
-        return { error: true, data: 'Token Invalido' };
+        return { error: true, data: 'Token Inválido' };
       }
 
       return { error: false, data: 'Token Valido' };

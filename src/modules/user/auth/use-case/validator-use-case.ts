@@ -45,48 +45,28 @@ export class ValidatorUserUseCase {
   }
 
   async existe(userDTO: CreateUserDto): Promise<{ error: boolean; data: string }> {
-    const existingAuthenticableCpf = await this.prisma.guardian.findFirst({
-      where: {
-        cpf: userDTO.cpf
-      }
+    const existingUser = await this.prisma.guardian.findFirst({
+        where: {
+            OR: [
+                { cpf: userDTO.cpf },
+                { whatsapp: userDTO.whatsapp },
+                { email: userDTO.email }
+            ]
+        }
     });
 
-    if (existingAuthenticableCpf) {
-      return {
-        error: true,
-        data: "Esse Cpf já está em uso."
-      };
+    if (existingUser) {
+        if (existingUser.cpf === userDTO.cpf) {
+            return { error: true, data: "Esse CPF já está em uso." };
+        }
+        if (existingUser.whatsapp === userDTO.whatsapp) {
+            return { error: true, data: "Esse telefone já está em uso." };
+        }
+        if (existingUser.email === userDTO.email) {
+            return { error: true, data: "Esse Email já está em uso." };
+        }
     }
 
-    const existingAuthenticablePhone = await this.prisma.guardian.findFirst({
-      where: {
-        whatsapp: userDTO.whatsapp
-      }
-    });
-
-    if (existingAuthenticablePhone) {
-      return {
-        error: true,
-        data: "Esse telefone já está em uso."
-      };
-    }
-
-    const existingAuthenticableEmail = await this.prisma.guardian.findFirst({
-      where: {
-        email: userDTO.email
-      }
-    });
-
-    if (existingAuthenticableEmail) {
-      return {
-        error: true,
-        data: "Esse Email já está em uso."
-      };
-    }
-
-    return {
-      error: false,
-      data: "Não existe nenhum usuario com esses dados"
-    };
+    return { error: false, data: "Não existe nenhum usuário com esses dados." };
   }
 }

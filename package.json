@@ -33,6 +33,7 @@
     "class-validator": "^0.14.1",
     "crypto": "^1.0.1",
     "formdata-node": "^6.0.3",
+    "node-cache": "^5.1.2",
     "nodemailer": "^6.10.0",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.0",

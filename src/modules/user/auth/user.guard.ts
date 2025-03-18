@@ -13,7 +13,7 @@ export class TokenUserService {
     const { authToken, resetToken, authExpiry, resetExpiry } = this.createTokens(guardianId, userType);
 
     // Criando novo token sem sobrescrever os anteriores
-    const newToken = await this.prisma.token.create({
+    await this.prisma.token.create({
       data: { guardianId, authToken, resetToken, authExpiry, resetExpiry, userType },
     });
 
@@ -77,14 +77,14 @@ export class TokenUserService {
 
     const tokenRecord = await this.prisma.token.findFirst({ where: { authToken, userType: 'GUARDIAN' } });
 
-    if(tokenRecord.guardianId === null){
+    if(!tokenRecord.guardianId || tokenRecord.guardianId === null){
       return { error: true, data: "logout" };
     }
 
     if (!tokenRecord) return { error: true, data: "logout" };
     if (!decryptionResult.data.userId) return { error: true, data: "logout" };
 
-    const user = await this.prisma.guardian.findUnique({ where: { id: decryptionResult.data.userId }, include: {accountVerification: true} });
+    const user = await this.prisma.guardian.findUnique({ where: { id: decryptionResult.data.userId }, include: {tokens: true, accountVerification: true} });
 
     if (tokenRecord.authExpiry < new Date()) {
       const newTokens = await this.refreshTokens(tokenRecord.resetToken);

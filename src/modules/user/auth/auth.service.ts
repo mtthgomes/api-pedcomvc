@@ -4,14 +4,12 @@ import { MyLogger } from 'src/shared/services/logger.service';
 import { PasswordService } from 'src/shared/services/password.service';
 import { CreateUserDto } from '@app/shared/dtos/auth/createUser.dto';
 import { TokenUserService } from '../auth/user.guard';
-import * as bcryptjs from 'bcryptjs';
 import { ValidatorUserUseCase } from './use-case/validator-use-case';
 import { StatusType } from '@prisma/client';
 import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
-import { DigitCodeService } from '@app/shared/services/digit-code.service';
-import { firebaseTokenDto } from './dto/firebase.dto';
 import { EmailService } from '@app/shared/services/email.service';
 import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
+import { firebaseTokenDto } from './dto/firebase.dto';
 
 @Injectable()
 export class AuthService {
@@ -26,96 +24,121 @@ export class AuthService {
     private readonly getStreamRefValidator: GetStreamRefValidator
   ) {}
 
+  /**
+   * 🔹 Criação de usuário otimizada
+   */
   async createUser(userDTO: CreateUserDto): Promise<{ error: boolean; data: string }> {
-    const nullable = await this.ValidatorUser.nullable(userDTO);
-    if (nullable.error) { return { error: true, data: nullable.data }; }
-  
-    const validate = await this.ValidatorUser.cpf(userDTO.cpf);
-    if (validate.error) { return { error: true, data: validate.data }; }
-  
-    const existe = await this.ValidatorUser.existe(userDTO);
-    if (existe.error) { return { error: true, data: existe.data }; }
-  
+    const [validator, newGetStreamRef] = await Promise.all([
+      this.ValidatorUser.validateAll(userDTO),
+      this.getStreamRefValidator.generateAndValidateToken()
+    ]);
+
+    if (validator.error) return { error: true, data: validator.data };
+    if (newGetStreamRef.error) return { error: true, data: "Erro ao gerar referência do usuário." };
+
     try {
-      const hashedPassword = await this.passwordService.hashPassword(userDTO.passwordHash);
-      const newGetStreamRef = await this.getStreamRefValidator.generateAndValidateToken();
+      const [createdUser, getStreamTokenResponse] = await this.prisma.$transaction(async (prisma) => {
+        const createdUser = await prisma.guardian.create({
+          data: {
+            ...userDTO,
+            passwordHash: await this.passwordService.hashPassword(userDTO.passwordHash),
+            getStreamRef: newGetStreamRef.data,
+          }
+        });
 
-      if (newGetStreamRef.error) {
-        return { error: true, data: "Erro ao criar Usuário." };
-      }
-  
-      await this.getStreamService.createUser({ 
-        id: newGetStreamRef.data, 
-        name: userDTO.name, 
-        email: userDTO.email, 
-        referenceId: newGetStreamRef.data 
-      });
-  
-      const getStreamTokenResponse = await this.getStreamService.getUserToken(newGetStreamRef.data);
-  
-      const user = await this.prisma.guardian.create({
-        data: { 
-          ...userDTO, 
-          passwordHash: hashedPassword, 
-          getStreamRef: newGetStreamRef.data, 
-          getStreamToken: getStreamTokenResponse.token 
-        }
+        const getStreamTokenResponse = await this.getStreamService.createUser({
+          id: newGetStreamRef.data,
+          name: userDTO.name,
+          email: userDTO.email,
+          referenceId: newGetStreamRef.data
+        }).then(() => this.getStreamService.getUserToken(newGetStreamRef.data));
+
+        return [createdUser, getStreamTokenResponse];
       });
 
-      this.emailService.sendMailWelcome(user.email, user.name);
-  
+      await this.prisma.guardian.update({
+        where: { email: userDTO.email },
+        data: { getStreamToken: getStreamTokenResponse.token }
+      });
+
+      this.emailService.sendMailWelcome(createdUser.email, createdUser.name);
+
       return { error: false, data: "Usuário criado com sucesso!" };
     } catch (error) {
-      await this.deleteUser(userDTO.email);
       this.logger.error('CREATE_USER_ERROR', error);
+
+      await this.deleteUser(userDTO.email).catch(err =>
+        this.logger.error('DELETE_PARTIAL_USER_ERROR', err)
+      );
+
       return { error: true, data: "Erro ao criar Usuário." };
     }
   }  
 
-  private async deleteUser(email: string){
-    const user = await this.prisma.guardian.findUnique({ where: { email } });
-    if(!user){
-      return;
-    }
-    await this.prisma.guardian.delete({ where: { email } });
-    return;
+  /**
+   * 🔹 Deleta o usuário caso ocorra erro
+   */
+  private async deleteUser(email: string) {
+    await this.prisma.guardian.delete({ where: { email } }).catch(() => null);
   }
 
-  async validateUser(email: string, password: string): Promise<{ error: boolean; data: any }> {
-    const user = await this.prisma.guardian.findUnique({ where: { email }, include: {tokens: true, accountVerification: true} });
+  /**
+   * 🔹 Validação e Login de Usuário
+   */
+  async validateUser(
+    email: string, 
+    password: string
+  ): Promise<{ error: boolean; data: any }> {
+    const user = await this.prisma.guardian.findFirst({
+      where: { email },
+      include: { tokens: true, accountVerification: true }
+    });
   
-    if (!user) {
-      return { error: true, data: "As suas credenciais de acesso estão incorretas." };
-    }
+    if (!user) return { error: true, data: "As suas credenciais de acesso estão incorretas." };
   
     if (user.status !== StatusType.ACTIVE) {
-      if (user.tokens.length > 0) {
+      if (user.tokens.length) {
         await this.prisma.token.deleteMany({ where: { guardianId: user.id } });
       }
       return { error: true, data: "Acesso bloqueado. Entre em contato com o suporte." };
     }
   
-    const passwordMatch = await bcryptjs.compare(password, user.passwordHash);
+    const [passwordMatch, token] = await Promise.all([
+      this.passwordService.comparePasswords(password, user.passwordHash),
+      this.tokenService.generateUserToken(user.id, "GUARDIAN")
+    ]);
   
-    if (!passwordMatch) {
-      return { error: true, data: "As suas credenciais de acesso estão incorretas." };
-    }
-  
-    const token = await this.tokenService.generateUserToken(user.id, "GUARDIAN");
+    if (!passwordMatch) return { error: true, data: "As suas credenciais de acesso estão incorretas." };
   
     return { error: false, data: { ...user, access_token: token.data } };
-  }
+  }  
 
-  async updateNotification(id: string, notificationToken: firebaseTokenDto): Promise<{ error: boolean; data: string }>{
-    if(!notificationToken.firebaseToken){ return { error: true, data: `FirebaseToken don't send` }; }
-    try{
-      const user = await this.prisma.guardian.findUnique({where: {id}})
-      await this.getStreamService.updateFirebaseToken({userId: user.getStreamRef, firebaseToken: notificationToken.firebaseToken});
-      await this.prisma.guardian.update({where: {id}, data: {firebaseToken: notificationToken.firebaseToken}})
+  /**
+   * 🔹 Atualiza o Token de Notificação do Firebase
+   */
+  async updateNotification(id: string, notificationToken: firebaseTokenDto): Promise<{ error: boolean; data: string }> {
+    if (!notificationToken.firebaseToken) {
+      return { error: true, data: "FirebaseToken não foi enviado." };
+    }
+
+    try {
+      const user = await this.prisma.guardian.findUnique({ where: { id } });
+
+      await Promise.all([
+        this.getStreamService.updateFirebaseToken({
+          userId: user.getStreamRef,
+          firebaseToken: notificationToken.firebaseToken
+        }),
+        this.prisma.guardian.update({
+          where: { id },
+          data: { firebaseToken: notificationToken.firebaseToken }
+        })
+      ]);
+
       return { error: false, data: "Notification Token atualizado com sucesso!" };
     } catch (error) {
       this.logger.error('UPDATE_NOTIFICATION_USER_ERROR', error);
-      return { error: true, data: `Erro updating FirebaseToken` };
+      return { error: true, data: "Erro ao atualizar FirebaseToken." };
     }
   }
 }

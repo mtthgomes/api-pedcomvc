@@ -28,9 +28,7 @@ const sendVerificationCode = async (number, code) => {
 
     try {
         const response = await apievo.post('', data); 
-        console.log(`✅ Código enviado com sucesso para ${number}: ${code}`);
     } catch (err) {
-        console.error('❌ Erro ao enviar o código:', err.response?.data || err);
         return null;
     }
 };
@@ -55,10 +53,30 @@ const sendRecoveryCode = async (number, code) => {
 
     try {
         const response = await apievo.post('', data); 
-        console.log(`✅ Código enviado com sucesso para ${number}: ${code}`);
     } catch (err) {
-        console.error('❌ Erro ao enviar o código:', err.response?.data || err);
         return null;
+    }
+};
+
+const sendWhatsAppButtonMessage = async (number, title, description, footer) => {
+    const data = {
+        number: number, // Número do destinatário com DDD e DDI (ex: 551199999999)
+        title: title,   // Título do botão
+        description: description, // Descrição do botão
+        footer: footer, // Rodapé do botão
+        buttons: [
+            {
+                "type": "copy",
+                "displayText": "Copia Código",
+                "copyCode": "ZXN0ZSDDqSB1bSBjw7NkaWdvIGRlIHRleHRvIGNvcGnDoXZlbC4="
+            },
+        ],
+        delay: 1 // Delay opcional para evitar bloqueios
+    };
+
+    try {
+        const response = await apievo.post('', data);
+    } catch (err) {
     }
 };
 

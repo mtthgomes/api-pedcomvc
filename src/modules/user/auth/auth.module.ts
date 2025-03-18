@@ -28,6 +28,6 @@ import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.valid
   ],
   controllers: [AuthController],
   providers: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService, GetStreamRefValidator],
-  exports: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService, GetStreamRefValidator],
+  exports: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService],
 })
 export class UserAuthModule {}

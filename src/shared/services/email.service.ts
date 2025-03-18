@@ -44,7 +44,7 @@ export class EmailService {
     try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      this.logger.error('SEND_EMAIL_ERROR', error);
+      this.logger.error('SEND_USER_EMAIL_ERROR', error);
     }
   }
 
@@ -63,7 +63,7 @@ export class EmailService {
     try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      this.logger.error('SEND_EMAIL_ERROR', error);
+      this.logger.error('SEND_DOCTOR_WELCOME_EMAIL_ERROR', error);
     }
   }
 
@@ -82,7 +82,7 @@ export class EmailService {
     try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      this.logger.error('SEND_EMAIL_ERROR', error);
+      this.logger.error('SEND_RECOVERY_EMAIL_ERROR', error);
     }
   }
 
@@ -101,7 +101,7 @@ export class EmailService {
     try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      this.logger.error('SEND_EMAIL_ERROR', error);
+      this.logger.error('SEND_VERIFICATION_ACCOUNT_EMAIL_ERROR', error);
     }
   }
 }

@@ -18,7 +18,10 @@ export class UserDoctorService {
           photo: true,
           getStreamRef: true,
           city: true,
-          state: true
+          state: true,
+          specialty: true,
+          crm: true,
+          rqe: true
         },
         where: {status: 'ACTIVE'}
       });

@@ -69,9 +69,7 @@ export class AuthController {
 
   @Patch('/update/notification')
   @UseGuards(UserAuthGuard)
-  async updateNotification(
-    @GetUserId() userId: string,
-    @Body() notificationToken: firebaseTokenDto): Promise<any> {
+  async updateNotification(@GetUserId() userId: string, @Body() notificationToken: firebaseTokenDto): Promise<any> {
       const data = await this.authService.updateNotification(userId, notificationToken);
       if(data.error) {
         throw new HttpException(data.data, HttpStatus.BAD_REQUEST);

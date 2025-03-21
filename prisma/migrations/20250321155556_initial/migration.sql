@@ -72,7 +72,7 @@ CREATE TABLE `Guardian` (
     `userType` ENUM('GUARDIAN', 'DEPENDENT', 'DOCTOR', 'ADMIN') NOT NULL DEFAULT 'GUARDIAN',
     `roles` JSON NOT NULL,
     `getStreamRef` VARCHAR(191) NOT NULL,
-    `getStreamToken` VARCHAR(191) NULL,
+    `getStreamToken` VARCHAR(191) NOT NULL,
     `firebaseToken` VARCHAR(191) NULL,
     `termsAccepted` BOOLEAN NOT NULL DEFAULT true,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -140,6 +140,24 @@ CREATE TABLE `Doctor` (
     UNIQUE INDEX `Doctor_crm_key`(`crm`),
     UNIQUE INDEX `Doctor_rqe_key`(`rqe`),
     UNIQUE INDEX `Doctor_getStreamRef_key`(`getStreamRef`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `AccountVerification` (
+    `id` VARCHAR(191) NOT NULL,
+    `token` VARCHAR(191) NOT NULL,
+    `verificationMethod` VARCHAR(191) NOT NULL,
+    `status` BOOLEAN NOT NULL DEFAULT false,
+    `verifiedAt` DATETIME(3) NULL,
+    `expiresAt` DATETIME(3) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `guardianId` VARCHAR(191) NULL,
+    `doctorId` VARCHAR(191) NULL,
+
+    UNIQUE INDEX `AccountVerification_guardianId_key`(`guardianId`),
+    UNIQUE INDEX `AccountVerification_doctorId_key`(`doctorId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -226,6 +244,20 @@ CREATE TABLE `Logs` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Version` (
+    `id` VARCHAR(191) NOT NULL,
+    `versionCode` VARCHAR(191) NOT NULL,
+    `versionName` VARCHAR(191) NOT NULL,
+    `requiredUpdate` BOOLEAN NOT NULL,
+    `description` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `Version_versionCode_key`(`versionCode`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `RiskSymptoms` ADD CONSTRAINT `RiskSymptoms_riskClassificationId_fkey` FOREIGN KEY (`riskClassificationId`) REFERENCES `RiskClassification`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -252,6 +284,12 @@ ALTER TABLE `Doctor` ADD CONSTRAINT `Doctor_cityId_fkey` FOREIGN KEY (`cityId`) 
 
 -- AddForeignKey
 ALTER TABLE `Doctor` ADD CONSTRAINT `Doctor_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `State`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `AccountVerification` ADD CONSTRAINT `AccountVerification_guardianId_fkey` FOREIGN KEY (`guardianId`) REFERENCES `Guardian`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `AccountVerification` ADD CONSTRAINT `AccountVerification_doctorId_fkey` FOREIGN KEY (`doctorId`) REFERENCES `Doctor`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Chat` ADD CONSTRAINT `Chat_dependentId_fkey` FOREIGN KEY (`dependentId`) REFERENCES `Dependent`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

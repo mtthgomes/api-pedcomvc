@@ -6,7 +6,6 @@ import { tokenDoctorService } from './doctor.guard';
 import * as bcryptjs from 'bcryptjs';
 import { ValidatorDoctorUseCase } from './use-case/validator-use-case';
 import { StatusType } from '@prisma/client';
-import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 import { CreateDoctorDto } from '@app/shared/dtos/auth/createDoctor.dto';
 import { firebaseTokenDto } from './dto/firebase.dto';
 import { descriptionDto } from './dto/profile';
@@ -14,6 +13,7 @@ import { MulterFile } from '@app/shared/interfaces/multer';
 import { R2UploadService } from '@app/shared/services/r2/cloudflare-r2.service';
 import { EmailService } from '@app/shared/services/email.service';
 import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
+import { StreamService } from '@app/shared/services/getStream/streamService';
 
 @Injectable()
 export class AuthService {
@@ -23,71 +23,69 @@ export class AuthService {
     private readonly passwordService: PasswordService,
     private readonly ValidatorUser: ValidatorDoctorUseCase,
     private readonly tokenService: tokenDoctorService,
-    private readonly getStreamService: GetStreamService,
+    private readonly getStreamService: StreamService,
     private readonly imageUploadService: R2UploadService,
     private readonly emailService: EmailService,
     private readonly getStreamRefValidator: GetStreamRefValidator
   ) {}
 
   async createDoctor(doctorDTO: CreateDoctorDto): Promise<{ error: boolean; data: string }> {
-    const nullable = await this.ValidatorUser.nullable(doctorDTO);
-    if (nullable.error) { return { error: true, data: nullable.data }; }
-  
-    const validate = await this.ValidatorUser.cpf(doctorDTO.cpf);
-    if (validate.error) { return { error: true, data: validate.data }; }
-  
-    const existe = await this.ValidatorUser.existe(doctorDTO);
-    if (existe.error) { return { error: true, data: existe.data }; }
-  
-    try {
-      const hashedPassword = await this.passwordService.hashPassword(doctorDTO.passwordHash);
-      const newGetStreamRef = await this.getStreamRefValidator.generateAndValidateToken();
+    const result = await this.ValidatorUser.validateAll(doctorDTO);
 
-      if (newGetStreamRef.error) {
-        return { error: true, data: "Erro ao criar Usuário." };
-      }
-
-      await this.getStreamService.createUser({ 
-        id: newGetStreamRef.data, 
-        name: doctorDTO.name, 
-        email: doctorDTO.email, 
-        referenceId: newGetStreamRef.data 
-      });
-  
-      const getStreamTokenResponse = await this.getStreamService.getUserToken(newGetStreamRef.data);
-
-      let prefix = ''
-      if(doctorDTO.gender == 'MALE'){
-        prefix="Dr"
-      } else {
-        prefix="Dra"
-      }
-
-      const crm = await this.prisma.doctor.findUnique({ where: { crm: doctorDTO.crm } });
-  
-      if (crm) {
-        return { error: true, data: "CRM já cadastrado" };
-      }
-  
-      await this.prisma.doctor.create({
-        data: {
-          ...doctorDTO,
-          passwordHash: hashedPassword, 
-          getStreamRef: newGetStreamRef.data, 
-          getStreamToken: getStreamTokenResponse.token,
-          prefix
-        }
-      });
-
-      this.emailService.sendMailDoctorWelcome(doctorDTO.email ,`${prefix} ${doctorDTO.name}`);
-  
-      return { error: false, data: "Médico criado com sucesso!" };
-    } catch (error) {
-      await this.deleteUser(doctorDTO.email);
-      this.logger.error('CREATE_USER_ERROR', error);
-      return { error: true, data: "Erro ao criar Usuário." };
+    if (result.error) {
+        return { error: true, data: result.data };
     }
-  }  
+
+    try {
+        const [hashedPassword, newGetStreamRef, existingCrm] = await Promise.all([
+            this.passwordService.hashPassword(doctorDTO.passwordHash),
+            this.getStreamRefValidator.generateAndValidateToken(),
+            this.prisma.doctor.findUnique({ where: { crm: doctorDTO.crm } })
+        ]);
+
+        if (newGetStreamRef.error) {
+            return { error: true, data: "Erro ao gerar referência Stream." };
+        }
+
+        if (existingCrm) {
+            return { error: true, data: "CRM já cadastrado." };
+        }
+
+        const prefix = doctorDTO.gender === 'MALE' ? 'Dr' : 'Dra';
+
+        // 🔥 Gera o token diretamente com o `StreamService`
+        const getStreamToken = await this.getStreamService.generateToken(newGetStreamRef.data);
+
+        // 🔥 Cria usuário no StreamChat e banco de dados em paralelo
+        const [_, __] = await Promise.all([
+            this.prisma.doctor.create({
+                data: {
+                    ...doctorDTO,
+                    passwordHash: hashedPassword,
+                    getStreamRef: newGetStreamRef.data,
+                    getStreamToken,
+                    prefix
+                }
+            }),
+            this.getStreamService.createUser(
+                newGetStreamRef.data,
+                doctorDTO.name,
+                doctorDTO.email,
+                newGetStreamRef.data
+            )
+        ]);
+
+        // 🔥 Envia o e-mail separadamente, sem impactar o tempo de resposta
+        this.emailService.sendMailDoctorWelcome(doctorDTO.email, `${prefix} ${doctorDTO.name}`)
+            .catch(err => this.logger.warn(`Erro ao enviar email: ${err.message}`));
+
+        return { error: false, data: "Médico criado com sucesso!" };
+    } catch (error) {
+        await this.deleteUser(doctorDTO.email);
+        this.logger.error('CREATE_USER_ERROR', error);
+        return { error: true, data: "Erro ao criar Usuário." };
+    }
+  }
 
   private async deleteUser(email: string) {
     const existingUser = await this.prisma.doctor.findUnique({ where: { email } });
@@ -133,7 +131,7 @@ export class AuthService {
         if(doctor.firebaseToken === notificationToken.firebaseToken){
           return { error: false, data: "Notification Token já está atualizado!" };
         }
-        await this.getStreamService.updateFirebaseToken({userId: doctor.getStreamRef, firebaseToken: notificationToken.firebaseToken});
+        await this.getStreamService.updateFirebaseToken(doctor.getStreamRef, notificationToken.firebaseToken);
         await this.prisma.doctor.update({where: {id}, data: {firebaseToken: notificationToken.firebaseToken}})
         return { error: false, data: "Notification Token atualizado com sucesso!" };
       } catch (error) {

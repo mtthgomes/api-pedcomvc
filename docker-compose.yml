@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  api:
+    build: .
+    container_name: nestjs_dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app    # Sincroniza o código local com o container
+      - /app/node_modules # Evita que a pasta node_modules local substitua a do container
+    command: npm run start:dev

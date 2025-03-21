@@ -2,15 +2,15 @@ import { PrismaService } from '@app/shared/database/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { ChatDto } from './dto/create.dto';
 import { ChatValidator } from './validator/chat.validator';
-import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 const slugify = require('slugify');
 import { MyLogger } from '@app/shared/services/logger.service';
+import { StreamService } from '@app/shared/services/getStream/streamService';
 
 @Injectable()
 export class UserChatService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly getStreamService: GetStreamService,
+    private readonly getStreamService: StreamService,
     private readonly logger: MyLogger
   ) {}
 
@@ -62,11 +62,9 @@ export class UserChatService {
       }
   
       // 🔹 Criar o chat no Stream
-      const chat = await this.getStreamService.createChat({
-        channelId: chatSlug,
-        userId: dependent.guardian.getStreamRef,
-        members: [dependent.guardian.getStreamRef, doctor.getStreamRef],
-      });
+      const chat = await this.getStreamService.createChat(
+         chatSlug, dependent.guardian.getStreamRef, [dependent.guardian.getStreamRef, doctor.getStreamRef]
+      );
   
       // 🔹 Atualizar o médico vinculado ao dependente
       await this.prisma.dependent.update({

@@ -8,10 +8,10 @@ import { ValidatorLoginUseCase } from '@app/shared/validators/login-use-case';
 import { PasswordService } from '@app/shared/services/password.service';
 import { ValidatorUserUseCase } from './use-case/validator-use-case';
 import { HttpModule } from '@nestjs/axios';
-import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { EmailService } from '@app/shared/services/email.service';
 import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
+import { StreamService } from '@app/shared/services/getStream/streamService';
 
 @Module({
   imports: [
@@ -27,7 +27,7 @@ import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.valid
     }),
   ],
   controllers: [AuthController],
-  providers: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService, GetStreamRefValidator],
-  exports: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, GetStreamService, DigitCodeService, EmailService],
+  providers: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, StreamService, DigitCodeService, EmailService, GetStreamRefValidator],
+  exports: [TokenUserService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorUserUseCase, StreamService, DigitCodeService, EmailService],
 })
 export class UserAuthModule {}

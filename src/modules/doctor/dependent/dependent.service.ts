@@ -20,8 +20,8 @@ export class DoctorDependentService {
       }
 
       const dependents = await this.prisma.dependent.findMany({
-        where: { doctorId: doctorId },
-        include: { doctor: true, chats: true }
+        where: { doctorId: doctor.id },
+        include: { doctor: { select: {name: true, crm: true, rqe: true, specialty: true, id: true, description: true}}, chats: true }
       });
 
       return { error: false, data: dependents };
@@ -36,7 +36,7 @@ export class DoctorDependentService {
     try {
       const dependent = await this.prisma.dependent.findUnique({
         where: { id },
-        include: { doctor: true, guardian: true }
+        include: { doctor: { select: {name: true, crm: true, rqe: true, specialty: true, id: true, description: true}}, guardian: true }
       });
 
       if (!dependent) {

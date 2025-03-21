@@ -7,6 +7,7 @@ import { AdminHomeModule } from './home/home.module';
 import { AdminDoctorModule } from './doctor/doctor.module';
 import { AdminChatModule } from './chat/chat.module';
 import { AdminDependentModule } from './dependents/dependents.module';
+import { AdminVersionModule } from './version/version.module';
 
 @Global()
 @Module({
@@ -18,7 +19,8 @@ import { AdminDependentModule } from './dependents/dependents.module';
     AdminUserModule,
     AdminDoctorModule,
     AdminChatModule,
-    AdminDependentModule
+    AdminDependentModule,
+    AdminVersionModule
   ],
   exports: [
     AdminAuthModule,
@@ -27,7 +29,8 @@ import { AdminDependentModule } from './dependents/dependents.module';
     AdminUserModule,
     AdminDoctorModule,
     AdminChatModule,
-    AdminDependentModule
+    AdminDependentModule,
+    AdminVersionModule
   ]
 })
 export class AdminGlobalModule {}

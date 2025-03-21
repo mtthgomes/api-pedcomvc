@@ -6,10 +6,10 @@ import { CreateUserDto } from '@app/shared/dtos/auth/createUser.dto';
 import { TokenUserService } from '../auth/user.guard';
 import { ValidatorUserUseCase } from './use-case/validator-use-case';
 import { StatusType } from '@prisma/client';
-import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 import { EmailService } from '@app/shared/services/email.service';
 import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
 import { firebaseTokenDto } from './dto/firebase.dto';
+import { StreamService } from '@app/shared/services/getStream/streamService';
 
 @Injectable()
 export class AuthService {
@@ -19,7 +19,7 @@ export class AuthService {
     private readonly passwordService: PasswordService,
     private readonly ValidatorUser: ValidatorUserUseCase,
     private readonly tokenService: TokenUserService,
-    private readonly getStreamService: GetStreamService,
+    private readonly getStreamService: StreamService,
     private readonly emailService: EmailService,
     private readonly getStreamRefValidator: GetStreamRefValidator
   ) {}
@@ -29,51 +29,65 @@ export class AuthService {
    */
   async createUser(userDTO: CreateUserDto): Promise<{ error: boolean; data: string }> {
     const [validator, newGetStreamRef] = await Promise.all([
-      this.ValidatorUser.validateAll(userDTO),
-      this.getStreamRefValidator.generateAndValidateToken()
+        this.ValidatorUser.validateAll(userDTO),
+        this.getStreamRefValidator.generateAndValidateToken()
     ]);
 
     if (validator.error) return { error: true, data: validator.data };
     if (newGetStreamRef.error) return { error: true, data: "Erro ao gerar referência do usuário." };
 
     try {
-      const [createdUser, getStreamTokenResponse] = await this.prisma.$transaction(async (prisma) => {
-        const createdUser = await prisma.guardian.create({
-          data: {
-            ...userDTO,
-            passwordHash: await this.passwordService.hashPassword(userDTO.passwordHash),
-            getStreamRef: newGetStreamRef.data,
-          }
+        const hashedPassword = await this.passwordService.hashPassword(userDTO.passwordHash);
+        const existingEmail = await this.prisma.guardian.findUnique({ where: { email: userDTO.email } });
+
+        if (existingEmail) {
+            return { error: true, data: "Email já cadastrado." };
+        }
+
+        const createdUser = await this.prisma.$transaction(async (prisma) => {
+            const newUser = await prisma.guardian.create({
+                data: {
+                    ...userDTO,
+                    passwordHash: hashedPassword,
+                    getStreamRef: newGetStreamRef.data,
+                    getStreamToken: '',
+                }
+            });
+
+            const getStreamToken = await this.getStreamService.generateToken(newGetStreamRef.data);
+
+            await prisma.guardian.update({
+                where: { email: userDTO.email },
+                data: { getStreamToken: getStreamToken }
+            });
+
+            return newUser;
         });
 
-        const getStreamTokenResponse = await this.getStreamService.createUser({
-          id: newGetStreamRef.data,
-          name: userDTO.name,
-          email: userDTO.email,
-          referenceId: newGetStreamRef.data
-        }).then(() => this.getStreamService.getUserToken(newGetStreamRef.data));
+        // 🔥 Criação no Stream separada para não bloquear a criação principal
+        try {
+            await this.getStreamService.createUser(
+                newGetStreamRef.data,
+                userDTO.name,
+                userDTO.email,
+                newGetStreamRef.data
+            );
+        } catch (error) {
+            this.logger.warn(`Falha ao criar usuário no Stream: ${error.message}`);
+        }
 
-        return [createdUser, getStreamTokenResponse];
-      });
+        // 🔥 Envio de e-mail separado para não impactar o tempo de resposta
+        this.emailService.sendMailWelcome(createdUser.email, createdUser.name);
 
-      await this.prisma.guardian.update({
-        where: { email: userDTO.email },
-        data: { getStreamToken: getStreamTokenResponse.token }
-      });
-
-      this.emailService.sendMailWelcome(createdUser.email, createdUser.name);
-
-      return { error: false, data: "Usuário criado com sucesso!" };
+        return { error: false, data: "Usuário criado com sucesso!" };
     } catch (error) {
-      this.logger.error('CREATE_USER_ERROR', error);
+        this.logger.error('CREATE_USER_ERROR', error);
 
-      await this.deleteUser(userDTO.email).catch(err =>
-        this.logger.error('DELETE_PARTIAL_USER_ERROR', err)
-      );
+        await this.deleteUser(userDTO.email);
 
-      return { error: true, data: "Erro ao criar Usuário." };
+        return { error: true, data: "Erro ao criar Usuário. Entre em contato com o suporte." };
     }
-  }  
+  }
 
   /**
    * 🔹 Deleta o usuário caso ocorra erro
@@ -125,10 +139,10 @@ export class AuthService {
       const user = await this.prisma.guardian.findUnique({ where: { id } });
 
       await Promise.all([
-        this.getStreamService.updateFirebaseToken({
-          userId: user.getStreamRef,
-          firebaseToken: notificationToken.firebaseToken
-        }),
+        this.getStreamService.updateFirebaseToken(
+          user.getStreamRef,
+          notificationToken.firebaseToken
+        ),
         this.prisma.guardian.update({
           where: { id },
           data: { firebaseToken: notificationToken.firebaseToken }

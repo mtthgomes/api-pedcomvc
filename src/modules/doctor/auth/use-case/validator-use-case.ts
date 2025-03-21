@@ -5,71 +5,45 @@ import { isValidCPF } from "src/shared/validators/cpf.validator";
 
 @Injectable()
 export class ValidatorDoctorUseCase {
-  constructor( private prisma: PrismaService){}
+  constructor(private prisma: PrismaService) {}
 
-  async cpf(cpf: string): Promise<{ error: boolean; data: string }> {
-    if (!isValidCPF(cpf)) {
-      return { error: true, data: 'CPF inválido' };
+  // 🔹 Função principal que valida todas as regras
+  async validateAll(doctorDTO: CreateUserDto): Promise<{ error: boolean; data: string }> {
+    // 🔹 Validação de campos obrigatórios
+    const requiredFields = ['whatsapp', 'cpf', 'name', 'email', 'passwordHash'];
+    const missingFields = requiredFields.filter((field) => !doctorDTO[field]);
+    if (missingFields.length) {
+        return { error: true, data: `Os campos ${missingFields.join(', ')} não podem ser vazios` };
     }
 
-    return { error: false, data: 'Todos os documentos são válidos' };
-  }
-
-  async nullable(userDto: CreateUserDto): Promise<{ error: boolean; data: string }> {
-    if(!userDto.whatsapp || !userDto.cpf || !userDto.name || !userDto.email || !userDto.passwordHash){
-      return{  "error": true, "data": "O campo Nome, Email, CPF, Telefone e Senha não podem ser vazios" }
+    // 🔹 Validação de CPF
+    if (!isValidCPF(doctorDTO.cpf)) {
+        return { error: true, data: 'CPF inválido' };
     }
 
-    if(userDto.gender != 'MALE' && userDto.gender != 'FEMALE' && userDto.gender != 'OTHER'){
-      return { error: true, data: 'Gênero não existe' };
+    // 🔹 Validação de Gênero
+    if (!['MALE', 'FEMALE', 'OTHER'].includes(doctorDTO.gender)) {
+        return { error: true, data: 'Gênero não existe' };
     }
 
-    return{  "error": false, "data": "Todos os campos estão preenchidos" }
-  }
+    // 🔹 Validação de existência no banco de dados (retorna no primeiro erro encontrado)
+    const [existingCpf, existingPhone, existingEmail] = await Promise.all([
+        this.prisma.doctor.findFirst({ where: { cpf: doctorDTO.cpf } }),
+        this.prisma.doctor.findFirst({ where: { whatsapp: doctorDTO.whatsapp } }),
+        this.prisma.doctor.findFirst({ where: { email: doctorDTO.email } }),
+    ]);
 
-  async existe(userDTO: CreateUserDto): Promise<{ error: boolean; data: string }> {
-    const existingAuthenticableCpf = await this.prisma.doctor.findFirst({
-      where: {
-        cpf: userDTO.cpf
-      }
-    });
-
-    if (existingAuthenticableCpf) {
-      return {
-        error: true,
-        data: "Esse Cpf já está em uso."
-      };
+    if (existingCpf) {
+        return { error: true, data: "Esse CPF já está em uso." };
+    }
+    if (existingPhone) {
+        return { error: true, data: "Esse telefone já está em uso." };
+    }
+    if (existingEmail) {
+        return { error: true, data: "Esse Email já está em uso." };
     }
 
-    const existingAuthenticablePhone = await this.prisma.doctor.findFirst({
-      where: {
-        whatsapp: userDTO.whatsapp
-      }
-    });
-
-    if (existingAuthenticablePhone) {
-      return {
-        error: true,
-        data: "Esse telefone já está em uso."
-      };
-    }
-
-    const existingAuthenticableEmail = await this.prisma.doctor.findFirst({
-      where: {
-        email: userDTO.email
-      }
-    });
-
-    if (existingAuthenticableEmail) {
-      return {
-        error: true,
-        data: "Esse Email já está em uso."
-      };
-    }
-
-    return {
-      error: false,
-      data: "Não existe nenhum usuario com esses dados"
-    };
+    // 🔹 Retorno final
+    return { error: false, data: "Validação concluída com sucesso" };
   }
 }

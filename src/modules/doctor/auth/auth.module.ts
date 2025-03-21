@@ -8,10 +8,10 @@ import { ValidatorLoginUseCase } from '@app/shared/validators/login-use-case';
 import { PasswordService } from '@app/shared/services/password.service';
 import { ValidatorDoctorUseCase } from './use-case/validator-use-case';
 import { HttpModule } from '@nestjs/axios';
-import { GetStreamService } from '@app/shared/services/microservice/getstream.service';
 import { DigitCodeService } from '@app/shared/services/digit-code.service';
 import { R2UploadService } from '@app/shared/services/r2/cloudflare-r2.service';
 import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.validator';
+import { StreamService } from '@app/shared/services/getStream/streamService';
 
 @Module({
   imports: [
@@ -27,6 +27,6 @@ import { GetStreamRefValidator } from '@app/shared/validators/getStreamRef.valid
     }),
   ],
   controllers: [AuthController],
-  providers: [tokenDoctorService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorDoctorUseCase, GetStreamService, DigitCodeService, R2UploadService, GetStreamRefValidator],
+  providers: [tokenDoctorService, AuthService, ValidatorLoginUseCase, PasswordService, ValidatorDoctorUseCase, StreamService, DigitCodeService, R2UploadService, GetStreamRefValidator],
 })
 export class DoctorAuthModule {}
